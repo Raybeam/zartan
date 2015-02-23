@@ -31,6 +31,7 @@ gem 'unicorn'
 
 # Use redis to store the current state of the system
 gem 'redis'
+gem 'redis-objects'
 
 # Use resque to asyncronously run long-running jobs
 gem 'resque'
