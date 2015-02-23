@@ -9,4 +9,24 @@ class Proxy < ActiveRecord::Base
     proxy.deleted_at = nil
     proxy
   end
+
+  # Check to make sure the proxy is a candidate for being decomissioned.
+  # If so, remove the proxy from the database and perform source-specific
+  # work to tear down the proxy
+  def decommission
+    actually_decomission = false
+
+    self.transaction isolation: :serializable do
+      if self.sites.empty?
+        # soft-delete the proxy so that nobody else tries to use it
+        self.touch :deleted_at
+        self.save
+        # Decomission the proxy outside of the transaction
+        actually_decomission = true
+      end
+    end
+    # Tear down the proxy outside of the transaction because we don't need
+    # the database anymore.
+    self.source.decommission_proxy(self) if actually_decomission
+  end
 end

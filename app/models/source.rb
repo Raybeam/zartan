@@ -18,16 +18,31 @@ class Source < ActiveRecord::Base
       && proxy.source != self
 
       if proxy.source.reliability < self.reliability
-        proxy.source.decomission_proxy(proxy)
+        proxy.source.decommission_proxy(proxy)
       else
-        self.decomission_proxy(proxy)
+        self.decommission_proxy(proxy)
         conflict.conflict_exists? = true
       end
     end
     conflict
   end
 
-  def decomission_proxy
+  # Pure virtual function intended for child classes to free the proxy resources
+  def decommission_proxy(proxy)
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+  end
+
+  # Create more proxies using source-specific code, then attach them
+  # to the source database object
+  def provision_proxies(num_proxies)
+    proxies = self._provision_proxies num_proxies
+    self << *proxies
+    self.save
+  end
+
+  # Pure virtual function intended for child classes to create
+  # the proxy resources
+  def _provision_proxies(num_proxies)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 end
