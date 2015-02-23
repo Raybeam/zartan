@@ -14,14 +14,14 @@ class Source < ActiveRecord::Base
 
   def fix_source_conflicts(proxy)
     conflict = SourceConflict.new false
-    if !proxy.source.nil?
+    if !proxy.source.nil? \
       && proxy.source != self
 
       if proxy.source.reliability < self.reliability
         proxy.source.decommission_proxy(proxy)
       else
         self.decommission_proxy(proxy)
-        conflict.conflict_exists? = true
+        conflict[:conflict_exists?] = true
       end
     end
     conflict
@@ -36,7 +36,7 @@ class Source < ActiveRecord::Base
   # to the source database object
   def provision_proxies(num_proxies)
     proxies = self._provision_proxies num_proxies
-    self << *proxies
+    self.proxies.push(*proxies)
     self.save
   end
 

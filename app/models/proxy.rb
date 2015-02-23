@@ -1,5 +1,5 @@
 class Proxy < ActiveRecord::Base
-  belongs_to :source, inverse_of: :proxy
+  belongs_to :source, inverse_of: :proxies
   has_many :proxy_performances, dependent: :destroy, inverse_of: :proxy
   has_many :sites, through: :proxy_performances
 
