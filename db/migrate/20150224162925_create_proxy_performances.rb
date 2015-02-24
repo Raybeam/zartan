@@ -1,8 +1,8 @@
 class CreateProxyPerformances < ActiveRecord::Migration
   def change
     create_table :proxy_performances do |t|
-      t.references :proxy, index: true
-      t.references :site, index: true
+      t.references :proxy, index: true, null: false
+      t.references :site, index: true, null:false
       t.timestamp :reset_at
       t.timestamp :deleted_at
 
@@ -10,5 +10,6 @@ class CreateProxyPerformances < ActiveRecord::Migration
     end
     add_foreign_key :proxy_performances, :proxies
     add_foreign_key :proxy_performances, :sites
+    add_index :proxy_performances, :deleted_at
   end
 end

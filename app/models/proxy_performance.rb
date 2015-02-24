@@ -1,4 +1,4 @@
 class ProxyPerformance < ActiveRecord::Base
-  belongs_to :proxy
-  belongs_to :site
+  belongs_to :proxy, inverse_of: :proxy_performances
+  belongs_to :site, inverse_of: :proxy_performances
 end
