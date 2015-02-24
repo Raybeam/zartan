@@ -2,11 +2,18 @@ require 'rails_helper'
 
 RSpec.describe Site, type: :model do
   describe "redis interactions" do
-    before :each do
+    before :all do
       @redis = Zartan::Redis.connect
+    end
+    
+    before :each do
       @site = create(:site)
       @proxy = create(:proxy)
       
+      @redis.flushdb
+    end
+    
+    after :all do
       @redis.flushdb
     end
     
