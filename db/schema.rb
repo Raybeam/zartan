@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150224162925) do
+ActiveRecord::Schema.define(version: 20150224212447) do
 
   create_table "proxies", force: :cascade do |t|
     t.string   "host",       null: false
@@ -62,7 +62,5 @@ ActiveRecord::Schema.define(version: 20150224162925) do
   end
 
   add_index "sources", ["deleted_at"], name: "index_sources_on_deleted_at"
-  add_index "sources", ["name"], name: "index_sources_on_name", unique: true
-  add_index "sources", ["type"], name: "index_sources_on_type", unique: true
 
 end
