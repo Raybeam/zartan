@@ -1,5 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Source, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
+  context '#add_proxy' do
+    it 'adds a proxy' do
+    end
+  end
 end

@@ -3,15 +3,25 @@ class Source < ActiveRecord::Base
 
   SourceConflict = Struct.new(:conflict_exists?)
 
+  # Helper method for child classes to use to add a new proxy to the database
+  # when the host and port have been created
   def add_proxy(host, port)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
-    return proxy if self.fix_source_conflicts.conflict_exists?
-    self.proxies << proxy
+    return if self.fix_source_conflicts.conflict_exists?
+    proxy.source = self
 
     proxy.save
   end
 
+  # Checks the database to see if the given proxy already exists
+  # and has a source.  If it does then conflicts are resolved based on the
+  # source's reliability
+  #
+  # Returns:
+  # SourceConflict object.  This object has one method, :conflict_exists?
+  # This method evaluates to true if the proxy already exists in the database
+  # with a source that has a reliability greater than or equal to self.
   def fix_source_conflicts(proxy)
     conflict = SourceConflict.new false
     if !proxy.source.nil? \
@@ -32,17 +42,9 @@ class Source < ActiveRecord::Base
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
-  # Create more proxies using source-specific code, then attach them
-  # to the source database object
-  def provision_proxies(num_proxies)
-    proxies = self._provision_proxies num_proxies
-    self.proxies.push(*proxies)
-    self.save
-  end
-
   # Pure virtual function intended for child classes to create
   # the proxy resources
-  def _provision_proxies(num_proxies)
+  def provision_proxies(num_proxies)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 end
