@@ -8,7 +8,7 @@ class Source < ActiveRecord::Base
   def add_proxy(host, port)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
-    return if self.fix_source_conflicts.conflict_exists?
+    return if self.fix_source_conflicts(proxy).conflict_exists?
     proxy.source = self
 
     proxy.save
