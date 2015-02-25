@@ -3,6 +3,8 @@ class Proxy < ActiveRecord::Base
   has_many :proxy_performances, dependent: :destroy, inverse_of: :proxy
   has_many :sites, through: :proxy_performances
 
+  include Concerns::SoftDeletable
+
   class << self
     def restore_or_initialize(host:, port:)
       proxy = self.find_or_initialize_by(host: host, port: port)
@@ -35,10 +37,6 @@ class Proxy < ActiveRecord::Base
 
   # Returns true if there are no sites actively connected to the proxy.
   def no_sites?
-    ProxyPerformance.joins(:proxy).
-      where(
-        :proxies => {:id => self.id},
-        :proxy_performances => {:deleted_at => nil}
-      ).count == 0
+    self.proxy_performances.active.empty?
   end
 end

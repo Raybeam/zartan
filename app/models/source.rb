@@ -3,16 +3,31 @@ class Source < ActiveRecord::Base
 
   SourceConflict = Struct.new(:conflict_exists?)
 
+  # Pure virtual function intended for child classes to free the proxy resources
+  def decommission_proxy(proxy)
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+  end
+
+  # Pure virtual function intended for child classes to create
+  # the proxy resources
+  def provision_proxies(num_proxies)
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+  end
+
+  protected
+
   # Helper method for child classes to use to add a new proxy to the database
   # when the host and port have been created
   def add_proxy(host, port)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
-    return if self.fix_source_conflicts(proxy).conflict_exists?
+    return if fix_source_conflicts(proxy).conflict_exists?
     proxy.source = self
 
     proxy.save
   end
+
+  private
 
   # Checks the database to see if the given proxy already exists
   # and has a source.  If it does then conflicts are resolved based on the
@@ -37,14 +52,4 @@ class Source < ActiveRecord::Base
     conflict
   end
 
-  # Pure virtual function intended for child classes to free the proxy resources
-  def decommission_proxy(proxy)
-    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
-  end
-
-  # Pure virtual function intended for child classes to create
-  # the proxy resources
-  def provision_proxies(num_proxies)
-    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
-  end
 end

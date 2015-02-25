@@ -14,7 +14,7 @@ RSpec.describe Source, type: :model do
       conflict = double(:conflict_exists? => false)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
 
-      source.add_proxy(proxy.host, proxy.port)
+      source.send(:add_proxy, proxy.host, proxy.port)
       expect(proxy.source).to be source
     end
 
@@ -22,7 +22,7 @@ RSpec.describe Source, type: :model do
       conflict = double(:conflict_exists? => true)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
 
-      source.add_proxy(proxy.host, proxy.port)
+      source.send(:add_proxy, proxy.host, proxy.port)
       expect(proxy.source).to_not be source
     end
   end
@@ -32,7 +32,7 @@ RSpec.describe Source, type: :model do
       proxy.source = source
       proxy.save
 
-      expect(source.fix_source_conflicts(proxy).conflict_exists?).to be_falsey
+      expect(source.send(:fix_source_conflicts, proxy).conflict_exists?).to be_falsey
     end
 
     it 'transfers ownership of the proxy to self if old source is bad' do
@@ -42,7 +42,7 @@ RSpec.describe Source, type: :model do
 
       expect(worse_source).to receive(:decommission_proxy)
       expect(source).to receive(:decommission_proxy).never
-      expect(source.fix_source_conflicts(proxy).conflict_exists?).to be_falsey
+      expect(source.send(:fix_source_conflicts, proxy).conflict_exists?).to be_falsey
     end
 
     it 'keeps ownership of the proxy on other source if old source is good' do
@@ -52,7 +52,7 @@ RSpec.describe Source, type: :model do
 
       expect(better_source).to receive(:decommission_proxy).never
       expect(source).to receive(:decommission_proxy)
-      expect(source.fix_source_conflicts(proxy).conflict_exists?).to be_truthy
+      expect(source.send(:fix_source_conflicts, proxy).conflict_exists?).to be_truthy
     end
   end
 end

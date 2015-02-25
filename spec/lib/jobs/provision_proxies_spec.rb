@@ -1,6 +1,6 @@
 RSpec.describe Jobs::ProvisionProxies do
   context '#perform' do
-    it 'performs' do
+    it 'previsions proxies and adds them to the site' do
       site = create(:site)
       expect(Site).to receive(:find).and_return(site)
       source = create(:blank_source)
