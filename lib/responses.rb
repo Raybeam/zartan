@@ -11,7 +11,7 @@ module Responses
     { result: 'error', reason: message }
   end
   
-  def retry(interval=nil)
+  def try_again(interval=nil)
     if interval.nil?
       config = Zartan::Config.new
       interval = config['default_retry_interval'].to_i
