@@ -1,4 +1,4 @@
-class SitePerformance
+class SourcePerformance
   attr_reader :source, :site
 
   def initialize(source:, site:)
@@ -7,6 +7,8 @@ class SitePerformance
   end
 
   def success_ratio
+    return @ratio if @ratio
+
     performances = ProxyPerformance.joins(:proxy).
       where(
         :proxy_performances => {:site_id => site},
@@ -16,7 +18,8 @@ class SitePerformance
     times_failed = performances.pluck(:times_failed).inject(0, :+)
     total = times_succeeded + times_failed
 
-    return 1.0 if total == 0
-    times_succeeded.to_f/total
+    @ratio = 1.0
+    @ratio = times_succeeded.to_f/total unless total == 0
+    @ratio
   end
 end

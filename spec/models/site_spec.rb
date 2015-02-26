@@ -75,10 +75,5 @@ RSpec.describe Site, type: :model do
       expect(@redis.zscore( @site.proxy_failures.key, @proxy.id )).to be_nil
     end
 
-    it "should generate a list of sites with their all-time success ratios" do
-      ratios = @site.site_performance_ratios
-      expect(ratios[0].success_ratio).to eq 0.25
-      expect(ratios[1].success_ratio).to eq 0.5
-    end
   end
 end

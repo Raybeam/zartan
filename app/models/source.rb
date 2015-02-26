@@ -14,6 +14,23 @@ class Source < ActiveRecord::Base
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
+  # Enqueues a ProvisionProxies job to create up to num_proxies new proxies.
+  # Returns the number of new proxies that should be created after the provision
+  def enqueue_provision(site:, source:, num_proxies:)
+    return 0 if num_proxies <= 0
+    desired_proxy_count = self.desired_proxy_count(num_proxies)
+    Resque.enqueue(Jobs::ProvisionProxies,
+      site.id, source.id, desired_proxy_count
+    )
+    desired_proxy_count - self.proxies.length
+  end
+
+  # return the number of proxies that would exist if up to num_requested
+  # proxies were provisioned
+  def desired_proxy_count(num_requested)
+    [self.max_proxies, self.proxies.length + num_requested].min
+  end
+
   protected
 
   # Helper method for child classes to use to add a new proxy to the database

@@ -20,6 +20,16 @@ class Site < ActiveRecord::Base
       proxy_failures.delete(proxy_id)
     end
   end
+
+  # The number of proxies currently used by the site
+  def num_proxies
+    proxy_pool.length
+  end
+
+  # The number of proxies needed to saturate the site's proxy pool
+  def num_proxies_needed
+    self.max_proxies - self.num_proxies
+  end
   
   def proxy_succeeded!(proxy)
     proxy_successes.increment(proxy.id)
@@ -33,10 +43,12 @@ class Site < ActiveRecord::Base
     end
   end
 
-  def add_proxies
-    
+  # Take a list of proxies and add them to the site in both postgres and redis
+  def add_proxies(proxies)
+    self.proxies.concat(*proxies)
+    proxies.each {|p| self.enable_proxy p}
   end
-  
+
   class << self
     def examine_health!(site_id, proxy_id)
       raise NotImplementedError
