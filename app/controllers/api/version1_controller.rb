@@ -3,7 +3,14 @@ module Api
     before_filter :set_site
     
     def get_proxy
-      render json: Response::success
+      result = @site.select_proxy(params[:older_than])
+      if result == Proxy::NoProxy
+        render json: Response::try_again
+      elsif result.is_a? Proxy::NoColdProxy
+        render json: Response::try_again(result.timeout)
+      else
+        render json: Response::success(result)
+      end
     end
     
     def report_result
