@@ -8,7 +8,7 @@ class Site < ActiveRecord::Base
   sorted_set :proxy_successes
   sorted_set :proxy_failures
   
-  def select_proxy(older_than=nil)
+  def select_proxy(older_than=-1)
     proxy_id, proxy_ts = nil, nil
     redis.multi do
       # Select the least recently used proxy, get its timestamp, then update its timestamp
@@ -19,9 +19,10 @@ class Site < ActiveRecord::Base
     
     begin
       proxy = Proxy.find(proxy_id)
-      if older_than and proxy_ts > (Time.now - older_than.seconds).to_i
+      threshold_ts = (Time.now - older_than.seconds).to_i
+      if proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        proxy = Proxy::NoProxy
+        proxy = Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
       end
       proxy
     rescue ActiveRecord::RecordNotFound => e

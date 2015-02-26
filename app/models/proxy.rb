@@ -4,4 +4,5 @@ class Proxy < ActiveRecord::Base
   has_many :sites, through: :proxy_performances
   
   NoProxy = Class.new
+  NoColdProxy = Struct.new(:timeout)
 end
