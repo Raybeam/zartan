@@ -77,8 +77,8 @@ RSpec.describe Site, type: :model do
 
     it "should generate a list of sites with their all-time success ratios" do
       ratios = @site.site_performance_ratios
-      expect(ratios[0].success_ratio).to eq .25
-      expect(ratios[1].success_ratio).to eq .5
+      expect(ratios[0].success_ratio).to eq 0.25
+      expect(ratios[1].success_ratio).to eq 0.5
     end
   end
 end

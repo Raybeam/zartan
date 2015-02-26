@@ -32,6 +32,10 @@ class Site < ActiveRecord::Base
       self.class.examine_health! self.id, proxy.id
     end
   end
+
+  def add_proxies
+    
+  end
   
   class << self
     def examine_health!(site_id, proxy_id)

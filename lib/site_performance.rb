@@ -12,11 +12,11 @@ class SitePerformance
         :proxy_performances => {:site_id => site},
         :proxies => {:source_id => source}
       )
-    times_succeeded = performances.map(&:times_succeeded).inject(:+)
-    times_failed = performances.map(&:times_failed).inject(:+)
+    times_succeeded = performances.pluck(:times_succeeded).inject(0, :+)
+    times_failed = performances.pluck(:times_failed).inject(0, :+)
     total = times_succeeded + times_failed
 
-    return 1 if total == 0
-    times_succeeded/total
+    return 1.0 if total == 0
+    times_succeeded.to_f/total
   end
 end
