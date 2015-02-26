@@ -3,7 +3,7 @@ module Api
     before_filter :set_site
     
     def get_proxy
-      render json: { result: 'success', payload: {} }
+      render json: Response::success
     end
     
     def report_result
@@ -17,7 +17,7 @@ module Api
       rescue ActiveRecord::RecordNotFound => e
         # Swallow not-found-type errors
       end
-      render :nothing
+      render json: Response::success
     end
     
     private
