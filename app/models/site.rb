@@ -35,11 +35,10 @@ class Site < ActiveRecord::Base
   end
   
   def disable_proxy(proxy)
-    proxy_id = proxy.id
     redis.multi do
-      proxy_pool.delete(proxy_id)
-      proxy_successes.delete(proxy_id)
-      proxy_failures.delete(proxy_id)
+      proxy_pool.delete(proxy.id)
+      proxy_successes.delete(proxy.id)
+      proxy_failures.delete(proxy.id)
     end
   end
   
