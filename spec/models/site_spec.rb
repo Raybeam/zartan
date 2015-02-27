@@ -36,7 +36,7 @@ RSpec.describe Site, type: :model do
       
         @site.disable_proxy @proxy
       
-        expect(@redis.hexists( @site.proxy_pool.key, @proxy.id )).to be false
+        expect(@redis.zscore( @site.proxy_pool.key, @proxy.id )).to be_nil
         expect(@redis.zscore( @site.proxy_successes.key, @proxy.id )).to be_nil
         expect(@redis.zscore( @site.proxy_failures.key, @proxy.id )).to be_nil
       end
@@ -56,7 +56,15 @@ RSpec.describe Site, type: :model do
       end
       
       
-      xit "should update the proxy's timestamp"
+      it "should update the proxy's timestamp" do
+        @site.enable_proxy @proxy
+        
+        @site.proxy_succeeded! @proxy
+        
+        expect(
+          @redis.zscore( @site.proxy_pool.key, @proxy.id )
+        ).to be_within(10).of(Time.now.to_i)
+      end
     end
     
     
@@ -89,18 +97,76 @@ RSpec.describe Site, type: :model do
       end
       
       
-      xit "should update the proxy's timestamp"
+      it "should update the proxy's timestamp" do
+        @site.enable_proxy @proxy
+        Zartan::Config.new['failure_threshold'] = 10
+        
+        @site.proxy_failed! @proxy
+        
+        expect(
+          @redis.zscore( @site.proxy_pool.key, @proxy.id )
+        ).to be_within(10).of(Time.now.to_i)
+      end
     end
     
     
     describe "proxy selection" do
-      xit "should return NoProxy when there are none"
-      xit "should return a Proxy when there are any"
-      xit "should return the least recently used proxy when there are several"
-      xit "should update the timestamp of the proxy it selects"
-      xit "should return NoColdProxy when there are no sufficiently old proxies"
-      xit "should set the NoColdProxy's timeout appropriately"
-      xit "should return a proxy object when there are sufficiently old proxies"
+      it "should return NoProxy when there are none" do
+        expect(@site.select_proxy).to eq(Proxy::NoProxy)
+      end
+      
+      
+      it "should return a Proxy when there are any" do
+        @site.enable_proxy @proxy
+        
+        expect(@site.select_proxy).to be_instance_of(Proxy)
+      end
+      
+      
+      it "should return the least recently used proxy when there are several" do
+        @proxy2 = create(:proxy, host: 'example.org')
+        
+        base_ts = Time.now.to_i
+        @redis.zadd( @site.proxy_pool.key, base_ts, @proxy.id )
+        @redis.zadd( @site.proxy_pool.key, (base_ts - 1), @proxy2.id )
+        
+        expect(@site.select_proxy).to eq(@proxy2)
+      end
+      
+      
+      it "should update the timestamp of the proxy it selects" do
+        @site.enable_proxy @proxy
+        
+        @site.select_proxy
+        
+        expect(
+          @redis.zscore( @site.proxy_pool.key, @proxy.id )
+        ).to be_within(10).of(Time.now.to_i)
+      end
+      
+      
+      it "should return NoColdProxy when there are no sufficiently old proxies" do
+        base_ts = Time.now.to_i - 60
+        @redis.zadd( @site.proxy_pool.key, base_ts, @proxy.id )
+        
+        expect(@site.select_proxy(120)).to be_instance_of(Proxy::NoColdProxy)
+      end
+      
+      
+      it "should set the NoColdProxy's timeout appropriately" do
+        base_ts = Time.now.to_i - 60
+        @redis.zadd( @site.proxy_pool.key, base_ts, @proxy.id )
+        
+        expect(@site.select_proxy(120).timeout).to be_between(50,60).inclusive
+      end
+      
+      
+      it "should return a proxy object when there are sufficiently old proxies" do
+        base_ts = Time.now.to_i - 60
+        @redis.zadd( @site.proxy_pool.key, base_ts, @proxy.id )
+        
+        expect(@site.select_proxy(60)).to eq(@proxy)
+      end
     end
   end
 end

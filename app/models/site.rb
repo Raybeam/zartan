@@ -5,26 +5,28 @@ class Site < ActiveRecord::Base
   # Redis-backed properties
   include Redis::Objects
   sorted_set :proxy_pool
+  lock :proxy_pool, expiration: 60.seconds
   sorted_set :proxy_successes
   sorted_set :proxy_failures
   
   def select_proxy(older_than=-1)
     proxy_id, proxy_ts = nil, nil
-    redis.multi do
-      # Select the least recently used proxy, get its timestamp, then update its timestamp
-      proxy_id = proxy_pool[0]
-      proxy_ts = proxy_pool.score(proxy_id)
+    # Select the least recently used proxy, get its timestamp, then update its timestamp
+    proxy_pool_lock.lock do
+      proxy_info = proxy_pool.range(0, 0, with_scores: true)
+      proxy_id, proxy_ts = proxy_info.first
       touch(proxy_id)
     end
     
     begin
-      proxy = Proxy.find(proxy_id)
       threshold_ts = (Time.now - older_than.seconds).to_i
-      if proxy_ts > threshold_ts
+      # TODO rethink this--probably shouldn't try to hit the database if proxy_ts is nil
+      if proxy_ts and proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        proxy = Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
+        Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
+      else
+        Proxy.find(proxy_id)
       end
-      proxy
     rescue ActiveRecord::RecordNotFound => e
       Proxy::NoProxy
     end
@@ -58,7 +60,7 @@ class Site < ActiveRecord::Base
   
   private
   def touch(proxy_id)
-    proxy_pool[proxy_id] = Time.now.to_i
+    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
   
   class << self
