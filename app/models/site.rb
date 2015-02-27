@@ -20,8 +20,10 @@ class Site < ActiveRecord::Base
     
     begin
       threshold_ts = (Time.now - older_than.seconds).to_i
-      # TODO rethink this--probably shouldn't try to hit the database if proxy_ts is nil
-      if proxy_ts and proxy_ts > threshold_ts
+      if proxy_ts.nil?
+        # We didn't find a proxy
+        Proxy::NoProxy
+      elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
         Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
       else
