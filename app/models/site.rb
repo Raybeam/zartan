@@ -33,11 +33,13 @@ class Site < ActiveRecord::Base
   end
   
   def enable_proxy(proxy)
-    proxy_pool[proxy.id] = 0
+    proxy_pool_lock.lock do
+      proxy_pool[proxy.id] = 0
+    end
   end
   
   def disable_proxy(proxy)
-    redis.multi do
+    proxy_pool_lock.lock do
       proxy_pool.delete(proxy.id)
       proxy_successes.delete(proxy.id)
       proxy_failures.delete(proxy.id)
@@ -45,15 +47,21 @@ class Site < ActiveRecord::Base
   end
   
   def proxy_succeeded!(proxy)
-    touch(proxy.id)
-    proxy_successes.increment(proxy.id)
+    proxy_pool_lock.lock do
+      touch(proxy.id)
+      proxy_successes.increment(proxy.id)
+    end
   end
   
   def proxy_failed!(proxy)
     conf = Zartan::Config.new
-    touch(proxy.id)
-    num_failures = proxy_failures.increment(proxy.id)
-    if num_failures >= conf['failure_threshold'].to_i
+    failure_threshold = conf['failure_threshold'].to_i
+    num_failures = 0
+    proxy_pool_lock.lock do
+      touch(proxy.id)
+      num_failures = proxy_failures.increment(proxy.id)
+    end
+    if num_failures >= failure_threshold
       self.class.examine_health! self.id, proxy.id
     end
   end
