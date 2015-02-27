@@ -39,4 +39,7 @@ class Proxy < ActiveRecord::Base
   def no_sites?
     self.proxy_performances.active.empty?
   end
+  
+  NoProxy = Class.new
+  NoColdProxy = Struct.new(:timeout)
 end
