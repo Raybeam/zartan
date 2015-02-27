@@ -52,7 +52,9 @@ class ProxyRequestor
   # Takes existing proxies from the database and adds them to the site
   # Returns the number of proxies that we should ask the source to provision
   def add_existing_proxies(perform)
-    num_proxies_to_request = @proxies_needed * perform.success_ratio / @ratio_sum
+    num_proxies_to_request = (
+      @proxies_needed * perform.success_ratio / @ratio_sum
+    ).round
     proxies = Proxy.retrieve(
       source: perform.source,
       site: site,
@@ -69,8 +71,8 @@ class ProxyRequestor
   # count of the number of proxies needed based on the maximum number of
   # proxies the source is able to create
   def provision_proxies(perform, remaining_proxies_needed)
-    num_proxies_to_build = source.enqueue_provision(
-      site: site, source: perform.source,
+    num_proxies_to_build = perform.source.enqueue_provision(
+      site: site,
       num_proxies: remaining_proxies_needed
     )
     @proxies_needed -= num_proxies_to_build

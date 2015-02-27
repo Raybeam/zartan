@@ -10,8 +10,8 @@ class Proxy < ActiveRecord::Base
     # currently unaffiliated with a site
     def retrieve(source:, site:, max_proxies:)
       assosciated_proxy_ids = ProxyPerformance.where(site: site).map(&:proxy_id)
-      self.where(source: source).reject {
-        |p| assosciated_proxy_ids.include? p.id
+      self.where(source: source).reject { |p|
+        assosciated_proxy_ids.include? p.id
       }.take(max_proxies)
     end
 

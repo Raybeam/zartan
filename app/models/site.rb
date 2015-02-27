@@ -46,6 +46,7 @@ class Site < ActiveRecord::Base
   # Take a list of proxies and add them to the site in both postgres and redis
   def add_proxies(proxies)
     self.proxies.concat(*proxies)
+    self.save
     proxies.each {|p| self.enable_proxy p}
   end
 

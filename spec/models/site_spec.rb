@@ -24,6 +24,13 @@ RSpec.describe Site, type: :model do
         @redis.hget( @site.proxy_pool.key, @proxy.id )
       ).to eq(@proxy.to_json)
     end
+
+    it "should calculate how many proxies need to be added" do
+      old_proxies_needed = @site.num_proxies_needed
+      @site.enable_proxy @proxy
+
+      expect(@site.num_proxies_needed).to eq old_proxies_needed-1
+    end
     
     it "should record proxy successes" do
       value = 10
@@ -75,5 +82,13 @@ RSpec.describe Site, type: :model do
       expect(@redis.zscore( @site.proxy_failures.key, @proxy.id )).to be_nil
     end
 
+    it "should add proxies to both redis and postgres" do
+      expect(@site).to receive(:enable_proxy)
+
+      @site.add_proxies([@proxy])
+
+      expect(ProxyPerformance.where(:proxy => @proxy, :site => @site).exists?).
+        to be_truthy
+    end
   end
 end
