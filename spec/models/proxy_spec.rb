@@ -9,7 +9,62 @@ RSpec.describe Proxy, type: :model do
     blank_source
   end
   let(:site) {create(:site)}
-  let(:proxy_performance) {ProxyPerformance.create(:site => site, :proxy => proxy)}
+  let(:proxy_performance) do
+    ProxyPerformance.create(:site => site, :proxy => proxy)
+  end
+
+  context '#retrieve' do
+    before :each do
+      site.save
+      source.save
+    end
+
+    it 'finds all proxies unaffiliated with a site' do
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 5
+      )
+      expect(proxies).to eq [proxy]
+    end
+
+    it 'ignores proxies that have been removed from a site' do
+      proxy_performance = ProxyPerformance.create(
+        :proxy => proxy,
+        :site => site,
+        :deleted_at => Time.now
+      )
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 5
+      )
+      expect(proxies).to eq []
+    end
+
+    it 'ignores proxies that are already part of a site' do
+      proxy_performance = ProxyPerformance.create(
+        :proxy => proxy,
+        :site => site
+      )
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 5
+      )
+      expect(proxies).to eq []
+    end
+
+    it 'limits the number of proxies returned' do
+      create(:proxy, :host => 'host2', :source => source).save
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 1
+      )
+      expect(proxies.length).to eq 1
+    end
+  end
 
   context '#restore_or_initialize' do
     it '"initializes" a proxy' do

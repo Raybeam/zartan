@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150224212447) do
+ActiveRecord::Schema.define(version: 20150226183959) do
 
   create_table "proxies", force: :cascade do |t|
     t.string   "host",       null: false
@@ -27,12 +27,14 @@ ActiveRecord::Schema.define(version: 20150224212447) do
   add_index "proxies", ["source_id"], name: "index_proxies_on_source_id"
 
   create_table "proxy_performances", force: :cascade do |t|
-    t.integer  "proxy_id",   null: false
-    t.integer  "site_id",    null: false
+    t.integer  "proxy_id",                    null: false
+    t.integer  "site_id",                     null: false
     t.datetime "reset_at"
     t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
+    t.integer  "times_succeeded", default: 0, null: false
+    t.integer  "times_failed",    default: 0, null: false
   end
 
   add_index "proxy_performances", ["deleted_at"], name: "index_proxy_performances_on_deleted_at"
@@ -40,10 +42,12 @@ ActiveRecord::Schema.define(version: 20150224212447) do
   add_index "proxy_performances", ["site_id"], name: "index_proxy_performances_on_site_id"
 
   create_table "sites", force: :cascade do |t|
-    t.string   "name",       null: false
+    t.string   "name",                     null: false
     t.datetime "deleted_at"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+    t.integer  "min_proxies", default: 5,  null: false
+    t.integer  "max_proxies", default: 10, null: false
   end
 
   add_index "sites", ["deleted_at"], name: "index_sites_on_deleted_at"

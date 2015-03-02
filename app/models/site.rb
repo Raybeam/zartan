@@ -60,6 +60,16 @@ class Site < ActiveRecord::Base
       proxy_failures.delete(proxy.id)
     end
   end
+
+  # The number of proxies currently used by the site
+  def num_proxies
+    proxy_pool.length
+  end
+
+  # The number of proxies needed to saturate the site's proxy pool
+  def num_proxies_needed
+    self.max_proxies - self.num_proxies
+  end
   
   def proxy_succeeded!(proxy)
     proxy_pool_lock.lock do
@@ -80,7 +90,14 @@ class Site < ActiveRecord::Base
       self.class.examine_health! self.id, proxy.id
     end
   end
-  
+
+  # Take a list of proxies and add them to the site in both postgres and redis
+  def add_proxies(proxies)
+    self.proxies.concat(*proxies)
+    self.save
+    proxies.each {|p| self.enable_proxy p}
+  end
+
   private
   def touch(proxy_id)
     proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
