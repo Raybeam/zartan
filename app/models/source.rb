@@ -1,6 +1,24 @@
 class Source < ActiveRecord::Base
   has_many :proxies, dependent: :destroy, inverse_of: :source
+  
+  # Ensure all of the necessary configuration options are set
+  validate do |source|
+    conf = source.config
+    source.class.required_fields.each_key do |field_name|
+      unless conf.has_key? field_name
+        source.errors[:config] << "must contain a '#{field_name}' property."
+      end
+    end
+  end
 
+  def config
+    JSON.parse(read_attribute(:config))
+  end
+  
+  def config=(new_value)
+    write_attribute(:config, new_value.to_json)
+  end
+  
   SourceConflict = Struct.new(:conflict_exists?)
 
   # Pure virtual function intended for child classes to free the proxy resources
