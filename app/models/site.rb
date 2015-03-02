@@ -35,7 +35,7 @@ class Site < ActiveRecord::Base
     proxy_pool_lock.lock do
       proxy_info = proxy_pool.range(0, 0, with_scores: true)
       proxy_id, proxy_ts = proxy_info.first
-      touch(proxy_id)
+      touch_proxy(proxy_id)
     end
 
     begin
@@ -82,7 +82,7 @@ class Site < ActiveRecord::Base
 
   def proxy_succeeded!(proxy)
     proxy_pool_lock.lock do
-      touch(proxy.id)
+      touch_proxy(proxy.id)
       proxy_successes.increment(proxy.id)
     end
   end
@@ -92,7 +92,7 @@ class Site < ActiveRecord::Base
     failure_threshold = conf['failure_threshold'].to_i
     num_failures = 0
     proxy_pool_lock.lock do
-      touch(proxy.id)
+      touch_proxy(proxy.id)
       num_failures = proxy_failures.increment(proxy.id)
     end
     if num_failures >= failure_threshold
@@ -128,7 +128,7 @@ class Site < ActiveRecord::Base
     @success_ratio_threshold ||= conf['success_ratio_threshold'].to_f
   end
 
-  def touch(proxy_id)
+  def touch_proxy(proxy_id)
     proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
 
