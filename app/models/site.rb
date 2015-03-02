@@ -136,6 +136,15 @@ class Site < ActiveRecord::Base
     self.proxy_performances.where(proxy: proxy).first.soft_delete
   end
 
+  # generate_proxy_report(proxy)
+  # Generate a report of the current success/failure counts in redis for a
+  # proxy, reset those redis counts, and update the long-term statistics
+  # for that site/proxy relationship in postgres
+  # Parameters:
+  #   proxy: The prxoy to get a report on
+  # Returns:
+  #   - NoPerformanceReport if something goes wrong getting the proxy pool lock
+  #   - Site::PerformanceReport if we retrieved the redis metrics
   def generate_proxy_report(proxy)
     report = NoPerformanceReport
     # Re-do the lock for every proxy to give other code a chance to
@@ -148,7 +157,21 @@ class Site < ActiveRecord::Base
       proxy_successes[proxy.id] = 0
       proxy_failures[proxy.id] = 0
     end
+    update_long_term_performance(proxy, report)
     report
+  end
+
+  # update_long_term_performance(proxy, report)
+  # Wrapper method to ProxyPerformance.increment, removing dependence on
+  # Site::PerformanceReport
+  # Parameters:
+  #   proxy: The prxoy that the report pertains to
+  #   report: A Site::PerformanceReport object
+  def update_long_term_performance(proxy, report)
+    ProxyPerformance.find(:proxy => proxy, :site => self).increment(
+      times_succeeded: report.times_succeeded,
+      times_failed: report.times_failed
+    )
   end
 
   class << self

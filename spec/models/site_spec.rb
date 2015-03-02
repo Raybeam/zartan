@@ -196,6 +196,7 @@ RSpec.describe Site, type: :model do
         @redis.zadd( site.proxy_successes.key, former_successes, proxy.id )
         former_failures = 10
         @redis.zadd( site.proxy_failures.key, former_failures, proxy.id )
+        expect(site).to receive(:update_long_term_performance)
 
         report = site.send(:generate_proxy_report, proxy)
 
@@ -269,6 +270,10 @@ RSpec.describe Site, type: :model do
   end
 
   context '#generate_proxy_report' do
+    before :each do
+      expect(site).to receive(:update_long_term_performance)
+    end
+
     it 'returns NoPerformanceReport if the proxy lock fails' do
       expect(site.proxy_pool_lock).to receive(:lock)
       expect(Site::PerformanceReport).to receive(:new).never
@@ -283,6 +288,22 @@ RSpec.describe Site, type: :model do
 
       expect(site.send(:generate_proxy_report, proxy)).
         to be Site::NoPerformanceReport
+    end
+  end
+
+  context '#update_long_term_performance' do
+    it 'updates long term performance of a site/proxy combination from redis' do
+      proxy_performance.save
+      expect(ProxyPerformance).to receive(:find).and_return(proxy_performance)
+      times_succeeded = 20
+      times_failed = 3
+      report = Site::PerformanceReport.new(times_succeeded, times_failed)
+      expect(proxy_performance).to receive(:increment).with(
+        :times_succeeded => times_succeeded,
+        :times_failed => times_failed
+      )
+
+      site.send(:update_long_term_performance, proxy, report)
     end
   end
 
