@@ -68,5 +68,22 @@ class Source < ActiveRecord::Base
     end
     conflict
   end
-
+  
+  
+  class << self
+    def required_fields
+      raise NotImplementedError, "Implement #{__callee__} in #{self.to_s}"
+    end
+    
+    def display_name
+      # The default implementation of ##display_name takes the name of the class
+      # minus any module names, and attempts to convert it into mutliple words
+      #   ex.: Sources::DigitalOcean.display_name == "Digital Ocean"
+      self.name.underscore.split(%r[/]).last.split(%r[_]).collect(&:capitalize).join ' '
+    end
+    
+    def source_types
+      @source_types ||= []
+    end
+  end
 end
