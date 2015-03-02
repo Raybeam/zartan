@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Proxy, type: :model do
-  
+
   let(:proxy) {create(:proxy)}
   let(:source) do
     blank_source = create(:blank_source)
@@ -11,6 +11,28 @@ RSpec.describe Proxy, type: :model do
   let(:site) {create(:site)}
   let(:proxy_performance) do
     ProxyPerformance.create(:site => site, :proxy => proxy)
+  end
+
+  context "SoftDeletable" do
+    it 'is active by default' do
+      expect(proxy.active?).to be_truthy
+    end
+
+    it 'is not active after being soft deleted' do
+      proxy.soft_delete
+      expect(proxy.active?).to be_falsey
+    end
+
+    it 'is in the list of active Proxies' do
+      proxy.save
+      expect(Proxy.active.length).to eq 1
+    end
+
+    it 'is not in the list of active Proxies when soft deleted' do
+      proxy.soft_delete
+      proxy.save
+      expect(Proxy.active.length).to eq 0
+    end
   end
 
   context '#retrieve' do
@@ -29,11 +51,8 @@ RSpec.describe Proxy, type: :model do
     end
 
     it 'ignores proxies that have been removed from a site' do
-      proxy_performance = ProxyPerformance.create(
-        :proxy => proxy,
-        :site => site,
-        :deleted_at => Time.now
-      )
+      proxy_performance.soft_delete
+      proxy_performance.save
       proxies = Proxy.retrieve(
         :source => source,
         :site => site,
@@ -43,10 +62,7 @@ RSpec.describe Proxy, type: :model do
     end
 
     it 'ignores proxies that are already part of a site' do
-      proxy_performance = ProxyPerformance.create(
-        :proxy => proxy,
-        :site => site
-      )
+      proxy_performance.save
       proxies = Proxy.retrieve(
         :source => source,
         :site => site,
@@ -77,7 +93,7 @@ RSpec.describe Proxy, type: :model do
     end
 
     it 'clears source and deleted_at for restored proxies' do
-      proxy.touch :deleted_at
+      proxy.soft_delete
       proxy.save
       expect(Proxy).to receive(:find_or_initialize_by).and_return(proxy)
 
@@ -85,6 +101,22 @@ RSpec.describe Proxy, type: :model do
 
       expect(proxy.source).to be_nil
       expect(proxy.deleted_at).to be_nil
+    end
+  end
+
+  context '#queue_decommission' do
+    it 'does nothing if there remain sites using the proxy' do
+      expect(proxy).to receive(:no_sites?).and_return(false)
+      expect(Resque).to receive(:enqueue).never
+
+      proxy.queue_decommission
+    end
+
+    it 'queues the decommission of an unused proxy' do
+      expect(proxy).to receive(:no_sites?).and_return(true)
+      expect(Resque).to receive(:enqueue)
+
+      proxy.queue_decommission
     end
   end
 
@@ -117,7 +149,7 @@ RSpec.describe Proxy, type: :model do
     end
 
     it 'knows there are no sites when proxy_performances are soft-deleted' do
-      proxy_performance.touch :deleted_at
+      proxy_performance.soft_delete
       proxy_performance.save
       expect(proxy.no_sites?).to be_truthy
     end
