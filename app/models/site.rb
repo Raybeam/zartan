@@ -98,8 +98,6 @@ class Site < ActiveRecord::Base
     proxies.each {|p| self.enable_proxy p}
   end
 
-  end
-  
   private
   def touch(proxy_id)
     proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?

@@ -8,8 +8,7 @@ module Jobs
           proxies = source.provision_proxies num_proxies
 
           site = Site.find site_id
-          site.proxies.concat(*proxies)
-          site.save
+          site.add_proxies(proxies)
         end
       end
     end
