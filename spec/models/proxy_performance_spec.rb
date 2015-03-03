@@ -42,5 +42,12 @@ RSpec.describe ProxyPerformance, type: :model do
         initial_times_failed + times_failed
       )
     end
+
+    it 'does nothing with default parameters' do
+      proxy_performance.increment
+
+      expect(proxy_performance.times_succeeded).to eq 0
+      expect(proxy_performance.times_failed).to eq 0
+    end
   end
 end

@@ -4,7 +4,7 @@ class ProxyPerformance < ActiveRecord::Base
 
   include Concerns::SoftDeletable
 
-  def increment(times_succeeded:, times_failed:)
+  def increment(times_succeeded: 0, times_failed: 0)
     self.times_succeeded += times_succeeded
     self.times_failed += times_failed
     self.save

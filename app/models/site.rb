@@ -169,7 +169,7 @@ class Site < ActiveRecord::Base
   def success_ratio_threshold
     return @success_ratio_threshold if @success_ratio_threshold
     conf = Zartan::Config.new
-    @success_ratio_threshold ||= conf['success_ratio_threshold'].to_f
+    @success_ratio_threshold = conf['success_ratio_threshold'].to_f
   end
 
   def touch_proxy(proxy_id)
