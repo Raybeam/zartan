@@ -283,8 +283,7 @@ RSpec.describe Site, type: :model do
 
   context '#success_ratio_threshold' do
     it 'retrieves the success ratio threshold config as a float' do
-      conf = double('conf', :[] => "0.25")
-      expect(Zartan::Config).to receive(:new).and_return(conf)
+      Zartan::Config.new[:success_ratio_threshold] = 0.25
       expect(site.send(:success_ratio_threshold)).to eq 0.25
     end
   end
@@ -303,14 +302,6 @@ RSpec.describe Site, type: :model do
   context '#generate_proxy_report' do
     before :each do
       expect(site).to receive(:update_long_term_performance)
-    end
-
-    it 'returns NoPerformanceReport if the proxy lock fails' do
-      expect(site.proxy_pool_lock).to receive(:lock)
-      expect(Site::PerformanceReport).to receive(:new).never
-
-      expect(site.send(:generate_proxy_report, proxy)).
-        to be Site::NoPerformanceReport
     end
 
     it 'returns NoPerformanceReport if the proxy lock fails' do
