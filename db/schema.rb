@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150226183959) do
+ActiveRecord::Schema.define(version: 20150302215310) do
 
   create_table "proxies", force: :cascade do |t|
     t.string   "host",       null: false
@@ -56,13 +56,12 @@ ActiveRecord::Schema.define(version: 20150226183959) do
   create_table "sources", force: :cascade do |t|
     t.string   "type",                       null: false
     t.string   "name",                       null: false
-    t.string   "username"
-    t.string   "password"
     t.integer  "max_proxies"
     t.float    "reliability", default: 50.0, null: false
     t.datetime "deleted_at"
     t.datetime "created_at",                 null: false
     t.datetime "updated_at",                 null: false
+    t.text     "config"
   end
 
   add_index "sources", ["deleted_at"], name: "index_sources_on_deleted_at"

@@ -1,7 +1,7 @@
 RSpec.describe ProxyRequestor do
   let(:site) {create(:site)}
   let(:requestor) {ProxyRequestor.new site: site}
-  let(:source) {create(:blank_source)}
+  let(:source) {create(:digital_ocean_source)}
 
   let(:perform1) {double(:success_ratio => 0.75)}
   let(:perform2) {double(:success_ratio => 0.5)}
@@ -22,7 +22,7 @@ RSpec.describe ProxyRequestor do
   context '#performances' do
     it 'produces a list of SitePerformance objects sorted by success_ratio' do
       3.times do
-        create(:blank_source)
+        create(:digital_ocean_source)
       end
       expect(SourcePerformance).to receive(:new).and_return(perform2)
       expect(SourcePerformance).to receive(:new).and_return(perform3)

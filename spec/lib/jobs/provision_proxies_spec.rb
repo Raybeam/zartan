@@ -1,7 +1,7 @@
 RSpec.describe Jobs::ProvisionProxies do
   context '#perform' do
     let(:site) {create(:site)}
-    let(:source) {create(:blank_source)}
+    let(:source) {create(:digital_ocean_source)}
 
     it 'previsions proxies and adds them to the site' do
       expect(Site).to receive(:find).and_return(site)
