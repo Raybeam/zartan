@@ -9,5 +9,9 @@ module Concerns
     def active?
       self.deleted_at.nil?
     end
+
+    def soft_delete
+      self.touch :deleted_at
+    end
   end
 end

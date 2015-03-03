@@ -9,11 +9,22 @@ RSpec.describe ProxyRequestor do
   let(:performances) {[perform1, perform2, perform3]}
 
   context '#run' do
-    it 'requests proxies from each site' do
+    before :each do
       expect(requestor).to receive(:init_counters)
+    end
+
+    it 'requests proxies from each site' do
+      requestor.instance_variable_set(:@proxies_needed, 5)
       expect(requestor).to receive(:performances).and_return([double,double])
       expect(requestor).to receive(:add_existing_proxies).twice
       expect(requestor).to receive(:provision_proxies).twice
+
+      requestor.run
+    end
+
+    it "does nothing if we don't need any more proxies" do
+      requestor.instance_variable_set(:@proxies_needed, 0)
+      expect(requestor).to receive(:performances).never
 
       requestor.run
     end
