@@ -100,6 +100,10 @@ class Source < ActiveRecord::Base
       self.name.underscore.split(%r[/]).last.split(%r[_]).collect(&:capitalize).join ' '
     end
     
+    # Return a shared Array of source types.
+    # Subclasses of Source can register themselves as an available source type
+    # by including the following line in their definition:
+    #     Source.source_types << self
     def source_types
       @source_types ||= []
     end
