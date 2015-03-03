@@ -159,6 +159,13 @@ class Site < ActiveRecord::Base
     end
   end
 
+  # success_ratio_threshold()
+  # retrieves the configured succes ratio threshold
+  # Parameters:
+  #   None
+  # Returns:
+  #   - Float: the minimum allowed success ratio for proxies to be considered
+  #     good
   def success_ratio_threshold
     return @success_ratio_threshold if @success_ratio_threshold
     conf = Zartan::Config.new
@@ -169,6 +176,14 @@ class Site < ActiveRecord::Base
     proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
 
+  # disable_proxy_in_database(proxy)
+  # dissassociates the proxy from the site in the database, but keeps the
+  # ProxyPerformance object available for performance queries
+  # Parameters:
+  #   proxy - The proxy to dissassociate from the site
+  # Returns:
+  #   - Float: the minimum allowed success ratio for proxies to be considered
+  #     good
   def disable_proxy_in_database(proxy)
     self.proxy_performances.where(proxy: proxy).first.soft_delete
   end
@@ -212,6 +227,11 @@ class Site < ActiveRecord::Base
   end
 
   class << self
+    # examine_health!(site_id, proxy_id)
+    # Queues a job to examine the health of a specific site/proxy relationship
+    # Parameters:
+    #   site_id - The id of the site to investigate
+    #   proxy_id - The id of the proxy to investigate
     def examine_health!(site_id, proxy_id)
       Resque.enqueue(Jobs::TargetedPerformanceAnalyzer,
         site_id, proxy_id
