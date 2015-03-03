@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Source, type: :model do
 
-  let(:source) {create(:blank_source)}
+  let(:source) {create(:digital_ocean_source)}
   let(:proxy) {create(:proxy)}
   let(:site) {create(:site)}
 
@@ -94,7 +94,7 @@ RSpec.describe Source, type: :model do
     end
 
     it 'transfers ownership of the proxy to self if old source is bad' do
-      worse_source = create(:blank_source, :reliability => source.reliability-1)
+      worse_source = create(:digital_ocean_source, :reliability => source.reliability-1)
       proxy.source = worse_source
       proxy.save
 
@@ -104,7 +104,7 @@ RSpec.describe Source, type: :model do
     end
 
     it 'keeps ownership of the proxy on other source if old source is good' do
-      better_source = create(:blank_source, :reliability => source.reliability+1)
+      better_source = create(:digital_ocean_source, :reliability => source.reliability+1)
       proxy.source = better_source
       proxy.save
 

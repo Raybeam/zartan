@@ -1,5 +1,5 @@
 RSpec.describe SourcePerformance do
-  let(:source) {create(:blank_source)}
+  let(:source) {create(:digital_ocean_source)}
   let(:site) {create(:site)}
   let(:source_performance) {SourcePerformance.new(:site => site, :source => source)}
   let(:proxy1) {create(:proxy, :source => source)}

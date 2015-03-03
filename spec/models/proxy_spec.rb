@@ -4,7 +4,7 @@ RSpec.describe Proxy, type: :model do
   
   let(:proxy) {create(:proxy)}
   let(:source) do
-    blank_source = create(:blank_source)
+    blank_source = create(:digital_ocean_source)
     blank_source.proxies << proxy
     blank_source
   end

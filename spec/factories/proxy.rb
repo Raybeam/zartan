@@ -3,6 +3,6 @@ FactoryGirl.define do
     host "example.com"
     port 12345
     
-    association :source, factory: :blank_source
+    association :source, factory: :digital_ocean_source
   end
 end
