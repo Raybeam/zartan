@@ -107,20 +107,57 @@ class Site < ActiveRecord::Base
     new_proxies.each {|p| self.enable_proxy p}
   end
 
+  # global_performance_analysis!()
+  # Run a performance analysis on all proxies associated with the site.
+  # Consistently successful proxies stay in service while unsuccessful
+  # proxies get pruned.
+  # Gets more proxies if there are too few proxies afterwards.
+  # Parameters:
+  #   None
   def global_performance_analysis!
     self.proxies.each do |proxy|
-      self.proxy_performance_analysis! proxy
+      disable_proxy_if_bad proxy
     end
+    request_more_proxies
   end
 
+  # proxy_performance_analysis!()
+  # Run a performance analysis on a single proxy associated with the site.
+  # Consistently successful proxies stay in service while unsuccessful
+  # proxies get pruned.
+  # Starts new proxies if there are too few proxies.
+  # Parameters:
+  #   proxy: The prxoy whose performance is being analyzed
   def proxy_performance_analysis!(proxy)
+    disable_proxy_if_bad proxy
+    request_more_proxies
+  end
+
+  private
+
+  # disable_proxy_if_bad(proxy)
+  # Run a performance analysis on a single proxy associated with the site.
+  # Consistently successful proxies stay in service while unsuccessful
+  # proxies get pruned.
+  # Parameters:
+  #   proxy: The prxoy to get a report on
+  def disable_proxy_if_bad(proxy)
     report = generate_proxy_report proxy
     if report.times_succeeded.to_f / report.total < success_ratio_threshold
       self.disable_proxy proxy
     end
   end
 
-  private
+  # request_more_proxies()
+  # Requests more proxies if the number of proxies currently in the site's
+  # pool has gone below the minimum.
+  # Parameters:
+  #   None
+  def request_more_proxies
+    if self.num_proxies < self.min_proxies
+      ProxyRequestor.new(site: self).run
+    end
+  end
 
   def success_ratio_threshold
     return @success_ratio_threshold if @success_ratio_threshold

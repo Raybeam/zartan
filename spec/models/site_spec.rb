@@ -220,16 +220,28 @@ RSpec.describe Site, type: :model do
   end
 
   describe 'performance analysis' do
+    before :each do
+      expect(site).to receive(:request_more_proxies)
+    end
+
     it "should run a performance analysis on all proxies" do
       2.times.each do |i|
         proxy = create(:proxy, :port => i)
         proxy.sites << site
         proxy.save
       end
-      expect(site).to receive(:proxy_performance_analysis!).twice
+      expect(site).to receive(:disable_proxy_if_bad).twice
 
       site.global_performance_analysis!
     end
+
+    it "should run a performance analysis on a single proxy" do
+      expect(site).to receive(:disable_proxy_if_bad)
+      site.proxy_performance_analysis! proxy
+    end
+  end
+
+  context '#disable_proxy_if_bad' do
 
     it "should not disable a successful proxy" do
       report = Site::PerformanceReport.new(10, 1)
@@ -237,7 +249,7 @@ RSpec.describe Site, type: :model do
       expect(site).to receive(:success_ratio_threshold).and_return(0.25)
       expect(site).to receive(:disable_proxy).never
 
-      site.proxy_performance_analysis! proxy
+      site.send(:disable_proxy_if_bad, proxy)
     end
 
     it "should disable an unsuccessful proxy" do
@@ -246,7 +258,26 @@ RSpec.describe Site, type: :model do
       expect(site).to receive(:success_ratio_threshold).and_return(0.25)
       expect(site).to receive(:disable_proxy)
 
-      site.proxy_performance_analysis! proxy
+      site.send(:disable_proxy_if_bad, proxy)
+    end
+  end
+
+  context '#request_more_proxies' do
+    it "does nothing if we don't need more proxies" do
+      expect(site).to receive(:num_proxies).and_return(5)
+      expect(site).to receive(:min_proxies).and_return(5)
+      expect(ProxyRequestor).to receive(:new).never
+
+      site.send(:request_more_proxies)
+    end
+
+    it "requests more proxies if we need more" do
+      expect(site).to receive(:num_proxies).and_return(4)
+      expect(site).to receive(:min_proxies).and_return(5)
+      requestor = double('requestor', :run => double)
+      expect(ProxyRequestor).to receive(:new).and_return(requestor)
+
+      site.send(:request_more_proxies)
     end
   end
 
