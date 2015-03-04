@@ -12,11 +12,12 @@ class Source < ActiveRecord::Base
   end
 
   def config
-    JSON.parse(read_attribute(:config))
+    @config ||= JSON.parse(read_attribute(:config))
   end
   
   def config=(new_value)
     write_attribute(:config, new_value.to_json)
+    @config = new_value
   end
   
   SourceConflict = Struct.new(:conflict_exists?)
