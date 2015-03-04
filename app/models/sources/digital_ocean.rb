@@ -1,22 +1,18 @@
 module Sources
-  class DigitalOcean < Source
+  class DigitalOcean < Sources::Fog
     class << self
       def required_fields
-        {
+        super.merge({
           client_id: :string,
-          api_key: :string,
+          api_key: :password,
           image_name: :string,
           flavor_name: :string,
           region_name: :string
-        }
+        })
       end
     end
 
     ID_TYPES = [:image_id, :flavor_id, :region_id]
-
-    def decommission_proxy(proxy)
-
-    end
 
     private
 
@@ -52,20 +48,31 @@ module Sources
       self.save
     end
 
+    # TODO: Some way to gracefully disable the source if the image_id can't
+    # be found
     def retrieve_image_id
-      connection.images.select{|i| i.name == config['image_name']}.first.id
+      name = config['image_name']
+      id = connection.images.select do |i|
+        i.name == name
+      end.first.andand.id
+      add_error "There is no source named #{name}" if id.nil?
+      id
     end
 
+    # TODO: Some way to gracefully disable the source if the flavor_id can't
+    # be found
     def retrieve_flavor_id
       connection.flavors.select{|f| f.name == config['flavor_name']}.first.id
     end
 
+    # TODO: Some way to gracefully disable the source if the region_id can't
+    # be found
     def retrieve_region_id
       connection.regions.select{|r| r.name == config['region_name']}.first.id
     end
 
     def create_server
-      server = connection.servers.create(
+      connection.servers.create(
         name: "proxy-#{SecureRandom.uuid}",
         image_id: image_id,
         flavor_id: flavor_id,

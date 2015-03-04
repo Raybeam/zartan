@@ -1,6 +1,10 @@
 class Source < ActiveRecord::Base
   has_many :proxies, dependent: :destroy, inverse_of: :source
-  
+
+  # Redis-backed properties
+  include Redis::Objects
+  set :errors, :marshal => true
+
   # Ensure all of the necessary configuration options are set
   validate do |source|
     conf = source.config
@@ -29,7 +33,7 @@ class Source < ActiveRecord::Base
 
   # Pure virtual function intended for child classes to create
   # the proxy resources
-  def provision_proxies(num_proxies)
+  def provision_proxies(num_proxies, site)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
@@ -54,13 +58,19 @@ class Source < ActiveRecord::Base
 
   # Helper method for child classes to use to add a new proxy to the database
   # when the host and port have been created
-  def add_proxy(host, port)
+  def add_proxy(host, port, site)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
     return if fix_source_conflicts(proxy).conflict_exists?
     proxy.source = self
-
     proxy.save
+    site.add_proxies(proxy)
+  end
+
+  # If a systemic error occurs while provisioning proxies then it gets
+  # reported here
+  def add_error(error_string)
+    errors << error_string
   end
 
   private
@@ -87,8 +97,7 @@ class Source < ActiveRecord::Base
     end
     conflict
   end
-  
-  
+
   class << self
     def required_fields
       raise NotImplementedError, "Implement #{__callee__} in #{self.to_s}"

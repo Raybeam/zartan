@@ -10,7 +10,8 @@ FactoryGirl.define do
         'api_key' => "DEADBEEF_KEY",
         'image_name' => "image",
         'flavor_name' => "1337MB",
-        'region_name' => "Nowhere 3"
+        'region_name' => "Nowhere 3",
+        'proxy_port' => 2341
       }
     end
   end
