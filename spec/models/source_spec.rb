@@ -6,6 +6,31 @@ RSpec.describe Source, type: :model do
   let(:proxy) {create(:proxy)}
   let(:site) {create(:site)}
 
+  describe "redis interactions" do
+    before :all do
+      @redis = Zartan::Redis.connect
+    end
+
+    before :each do
+      @redis.flushdb
+    end
+
+    after :all do
+      @redis.flushdb
+    end
+
+    it "adds a persistent error to redis" do
+      error_string = "Test error"
+      
+      source.send(:add_error, error_string)
+
+      member = @redis.lindex(source.persistent_errors.key, 0)
+      expect(
+        @redis.lindex(source.persistent_errors.key, 0)
+      ).to eq error_string
+    end
+  end
+
   context '#enqueue_provision' do
     it 'does nothing if no proxies were requested' do
       expect(
@@ -72,7 +97,7 @@ RSpec.describe Source, type: :model do
       conflict = double(:conflict_exists? => false)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
 
-      source.send(:add_proxy, proxy.host, proxy.port)
+      source.send(:add_proxy, proxy.host, proxy.port, site)
       expect(proxy.source).to be source
     end
 
@@ -80,7 +105,7 @@ RSpec.describe Source, type: :model do
       conflict = double(:conflict_exists? => true)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
 
-      source.send(:add_proxy, proxy.host, proxy.port)
+      source.send(:add_proxy, proxy.host, proxy.port, site)
       expect(proxy.source).to_not be source
     end
   end

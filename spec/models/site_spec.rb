@@ -184,7 +184,7 @@ RSpec.describe Site, type: :model do
     it "should add proxies to both redis and postgres" do
       expect(site).to receive(:enable_proxy)
 
-      site.add_proxies([proxy])
+      site.add_proxies(proxy)
 
       expect(ProxyPerformance.where(:proxy => proxy, :site => site).exists?).
         to be_truthy

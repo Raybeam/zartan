@@ -62,7 +62,7 @@ class ProxyRequestor
       site: site,
       max_proxies: num_proxies_to_request
     )
-    site.add_proxies(proxies)
+    site.add_proxies(*proxies)
     @proxies_needed -= proxies.length
     @ratio_sum -= perform.success_ratio
 
