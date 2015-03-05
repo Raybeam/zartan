@@ -1,0 +1,65 @@
+<div class="page-header">
+  <h1>New Source</h1>
+</div>
+<% if @source.errors.any? %>
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      <h3 class="panel-title"><%= pluralize(@source.errors.count, "error") %> were encountered while creating this source.</h3>
+    </div>
+    <div class="panel-body">
+      <ul>
+        <% @source.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+<% end %>
+
+<%= form_for @source, url: {action: "create"}, html: {class: "form-horizontal col-lg-8 col-lg-offset-2"} do |f| %>
+  <div class="form-group">
+    <label for="sourceName" class="control-label col-sm-3">Name</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[name]" class="form-control" id="sourceName" placeholder="Name" value="<%= @source.name %>">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="typeSelector" class="control-label col-sm-3">Type</label>
+    <div class="col-sm-9">
+      <select id="typeSelector" class="form-control">
+        <option disabled selected>Select Type</option>
+        <% Source.source_types.each do |source_type| %>
+          <option value="<%= source_type.name.gsub(/::/,'') %>"><%= source_type.display_name %></option>
+        <% end %>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sourceMaxProxies" class="control-label col-sm-3">Max Proxies</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[max_proxies]" class="form-control" id="sourceMaxProxies" placeholder="Max Proxies" value="<%= @source.max_proxies %>">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sourceReliability" class="control-label col-sm-3">Reliability Score</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[reliability]" class="form-control" id="sourceName" value="<%= @source.reliability %>">
+    </div>
+  </div>
+  <div id="configTarget"></div>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3">
+      <button type="submit" class="btn btn-primary">Create</button>
+      <%= link_to "Cancel", sources_path, class: 'btn btn-default' %>
+    </div>
+  </div>
+<% end %>
+
+<div id="configForms">
+  <% Source.source_types.each do |source_type| %>
+    <div id="sourceType<%= source_type.name.gsub(/::/,'') %>" class="configBlock">
+      <input type="hidden" name="source_type" value="<%= source_type.name %>">
+      <%= render partial: 'source_config', locals: { source_type: source_type, values: @source.config, show_help: false } %>
+    </div>
+  <% end %>
+</div>

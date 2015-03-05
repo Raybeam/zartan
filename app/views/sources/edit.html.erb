@@ -1,0 +1,53 @@
+<div class="page-header">
+  <h1>Edit Source <%= @source.name %></h1>
+</div>
+<% if @source.errors.any? %>
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      <h3 class="panel-title"><%= pluralize(@source.errors.count, "error") %> were encountered while updating this source.</h3>
+    </div>
+    <div class="panel-body">
+      <ul>
+        <% @source.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+<% end %>
+
+<%= form_for @source, url: {action: "update"}, html: {class: "form-horizontal col-lg-8 col-lg-offset-2"} do |f| %>
+  <div class="form-group">
+    <label for="sourceName" class="control-label col-sm-3">Name</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[name]" class="form-control" id="sourceName" placeholder="Name" value="<%= @source.name %>">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sourceType" class="control-label col-sm-3">Type</label>
+    <div class="col-sm-9">
+      <select id="sourceType" class="form-control" disabled>
+        <option selected disabled><%= @source.class.display_name %></option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sourceMaxProxies" class="control-label col-sm-3">Max Proxies</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[max_proxies]" class="form-control" id="sourceMaxProxies" placeholder="Max Proxies" value="<%= @source.max_proxies %>">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sourceReliability" class="control-label col-sm-3">Reliability Score</label>
+    <div class="col-sm-9">
+      <input type="text" name="source[reliability]" class="form-control" id="sourceName" value="<%= @source.reliability %>">
+    </div>
+  </div>
+  <%= render partial: 'source_config', locals: { source_type: @source.class, values: @source.config, show_help: true } %>
+  <div class="form-group">
+    <div class="col-sm-9 col-sm-offset-3">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <%= link_to "Cancel", source_path(@source), class: 'btn btn-default' %>
+    </div>
+  </div>
+<% end %>
