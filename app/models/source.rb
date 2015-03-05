@@ -1,9 +1,11 @@
 class Source < ActiveRecord::Base
   has_many :proxies, dependent: :destroy, inverse_of: :source
 
+  before_validation :save_config
+
   # Redis-backed properties
   include Redis::Objects
-  set :errors, :marshal => true
+  list :persistent_errors
 
   # Ensure all of the necessary configuration options are set
   validate do |source|
@@ -20,19 +22,27 @@ class Source < ActiveRecord::Base
   end
   
   def config=(new_value)
-    write_attribute(:config, new_value.to_json)
     @config = new_value
+  end
+
+  def save_config
+    write_attribute(:config, @config.to_json) if @config
   end
   
   SourceConflict = Struct.new(:conflict_exists?)
 
   # Pure virtual function intended for child classes to free the proxy resources
+  # Parameters:
+  #   proxy - The proxy object that is to be decommissioned
   def decommission_proxy(proxy)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
   # Pure virtual function intended for child classes to create
   # the proxy resources
+  # Parameters:
+  #   num_proxies - How many proxies to create
+  #   site - what site to add the proxies to after they're created
   def provision_proxies(num_proxies, site)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
@@ -46,6 +56,13 @@ class Source < ActiveRecord::Base
       site.id, self.id, desired_proxy_count
     )
     desired_proxy_count - self.proxies.length
+  end
+
+  # Pure virtual function intended for child classes to
+  # test the saved config by connecting to the remote source.
+  # Not part of standard validation because of external dependency
+  def valid_config?
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
   # return the number of proxies that would exist if up to num_requested
@@ -70,7 +87,7 @@ class Source < ActiveRecord::Base
   # If a systemic error occurs while provisioning proxies then it gets
   # reported here
   def add_error(error_string)
-    errors << error_string
+    persistent_errors << error_string
   end
 
   private

@@ -39,6 +39,8 @@ gem 'resque'
 # Fog supports many different cloud computing services
 gem 'fog'
 
+gem 'andand'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'

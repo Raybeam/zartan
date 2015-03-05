@@ -6,14 +6,57 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     ProxyPerformance.create(:proxy => proxy, :site => site)
   end
 
+  context '#valid_config?' do
+    it 'identifies a valid config' do
+      expect(source).to receive(:names_to_ids)
+      expect(source).to receive(:image_id).and_return 1
+      expect(source).to receive(:flavor_id).and_return 2
+      expect(source).to receive(:region_id).and_return 3
+
+      expect(source.valid_config?).to be_truthy
+    end
+
+    it 'identifies an invalid config when an id is nil' do
+      expect(source).to receive(:names_to_ids)
+      expect(source).to receive(:image_id).and_return 1
+      expect(source).to receive(:flavor_id).and_return 2
+      expect(source).to receive(:region_id).and_return nil
+
+      expect(source.valid_config?).to be_falsey
+    end
+
+    it 'identifies an invalid config when we fail to connect' do
+      expect(source).to receive(:names_to_ids).
+        and_raise(Excon::Errors::Unauthorized.new('test_error'))
+
+      expect(source.valid_config?).to be_falsey
+    end
+  end
+
   context '#server_by_proxy' do
     it 'retrieves a server that matches the proxy' do
+      expect(source).to receive(:valid_config?).and_return(true)
       server1 = double('server1', :public_ip_address => '172.0.0.1')
       server2 = double('server2', :public_ip_address => proxy.host)
       connection = double('connection', :servers => [server1, server2])
       expect(source).to receive(:connection).and_return(connection)
 
       expect(source.send(:server_by_proxy, proxy)).to be server2
+    end
+
+    it 'returns NoServer if we do not have a valid config' do
+      expect(source).to receive(:valid_config?).and_return(false)
+
+      expect(source.send(:server_by_proxy, proxy)).to be Sources::Fog::NoServer
+    end
+
+    it 'returns NoServer if we could not find the server' do
+      expect(source).to receive(:valid_config?).and_return(true)
+      server1 = double('server1', :public_ip_address => '172.0.0.1')
+      server2 = double('server2', :public_ip_address => '10.0.0.0')
+      connection = double('connection', :servers => [server1, server2])
+
+      expect(source.send(:server_by_proxy, proxy)).to be Sources::Fog::NoServer
     end
   end
 
@@ -39,8 +82,21 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       source.send(:names_to_ids)
 
       Sources::DigitalOcean::ID_TYPES.each_with_index do |id_type, i|
-        expect(source.send(id_type)).to eq i
+        expect(source.send("#{id_type}_id".to_sym)).to eq i
       end
+    end
+
+    it 'logs an error if the id could not be retrieved' do
+      image1 = double(:name => 'foo', :id => 1)
+      image2 = double(:name => 'bar', :id => 2)
+      connection = double(:images => [image1, image2])
+      expect(source).to receive(:connection).twice.and_return(connection)
+      expect(source).to receive(:add_error).with(
+        "There is no image named #{source.config['image_name']}. " \
+        "Options are: foo, bar"
+      )
+
+      expect(source.send(:retrieve_image_id)).to be nil
     end
 
     it 'transforms image name to id' do
@@ -68,6 +124,19 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:connection).and_return(connection)
 
       expect(source.send(:retrieve_region_id)).to eq 2
+    end
+  end
+
+  context '#create_server' do
+    it 'creates a server' do
+      server = double('server')
+      connection = double(:servers => double(:create => server))
+      expect(source).to receive(:connection).and_return(connection)
+      expect(source).to receive(:image_id).and_return(1)
+      expect(source).to receive(:flavor_id).and_return(2)
+      expect(source).to receive(:region_id).and_return(3)
+
+      expect(source.send(:create_server)).to be server
     end
   end
 

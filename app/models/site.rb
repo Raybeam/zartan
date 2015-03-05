@@ -100,7 +100,7 @@ class Site < ActiveRecord::Base
     end
   end
 
-  # Take a list of proxies and add them to the site in both postgres and redis
+  # Take one or more proxies and add them to the site in both postgres and redis
   def add_proxies(*new_proxies)
     self.proxies.concat(*new_proxies)
     self.save

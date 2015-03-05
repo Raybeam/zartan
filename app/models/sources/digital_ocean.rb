@@ -12,12 +12,23 @@ module Sources
       end
     end
 
-    ID_TYPES = [:image_id, :flavor_id, :region_id]
+    ID_TYPES = ['image', 'flavor', 'region']
+
+    def valid_config?
+      valid = false
+      begin
+        names_to_ids # Force re-evaluation of ids
+        valid = (!image_id.nil? && !flavor_id.nil? && !region_id.nil?)
+      rescue Excon::Errors::Unauthorized => e
+        add_error "Invalid credentials"
+      end
+      valid
+    end
 
     private
 
     def connection
-      @connection ||= Fog::Compute.new(
+      @connection ||= ::Fog::Compute.new(
         :provider => 'DigitalOcean',
         :digitalocean_api_key => config['api_key'],
         :digitalocean_client_id => config['client_id']
@@ -25,50 +36,77 @@ module Sources
     end
 
     def server_by_proxy(proxy)
-      connection.servers.select{|s| s.public_ip_address == proxy.host}.first
+      return NoServer unless valid_config?
+      server = connection.servers.select do |s|
+        s.public_ip_address == proxy.host
+      end.first
+      return NoServer if server.nil?
+      server
     end
 
     # The ID_TYPES methods all are very similar, so dynamically create all
     # of them at once
     ID_TYPES.each do |id_type|
       class_eval <<-RUBY
-        def #{id_type}
-          key = '#{id_type}'
+        # image_id()
+        # flavor_id()
+        # region_id()
+        # Get the image/flavor/region id.
+        # If the id is undefined, translate image/flavor/region name to id by
+        # connecting to Digital Ocean.
+        # Returns cached value if already calculated
+        # Parameters:
+        #   None
+        # Returns:
+        #   - a numeric id representing the image/flavor/region on Digital Ocean
+        #   - nil if not found
+        def #{id_type}_id
+          key = '#{id_type}_id'
           return config[key] if config.has_key?(key)
           names_to_ids
           config[key]
         end
+
+        # retrieve_image_id()
+        # retrieve_flavor_id()
+        # retrieve_region_id()
+        # Retrieve image/flavor/region id from Digital Ocean
+        # If the id is not found then adds to the source's persistent error log
+        # Parameters:
+        #   None
+        # Returns:
+        #   - a numeric id representing the image/flavor/region on Digital Ocean
+        #   - nil if not found
+        def retrieve_#{id_type}_id
+          name = config['#{id_type}_name']
+          id = connection.#{id_type.pluralize}.select do |i|
+            i.name == name
+          end.first.andand.id
+          if id.nil?
+            names = connection.#{id_type.pluralize}.map(&:name).join(", ")
+            add_error "There is no #{id_type} named \#{name}. " \
+              "Options are: \#{names}"
+          end
+          id
+        end
       RUBY
     end
 
+    # names_to_ids()
+    # Retrieve all ids from the server and save them in the database
+    # Does not save to the database if at least one id is nil.
+    # Parameters:
+    #   None
     def names_to_ids
       config['image_id'] = retrieve_image_id
       config['flavor_id'] = retrieve_flavor_id
       config['region_id'] = retrieve_region_id
-      self.save
-    end
+      unless config['image_id'].nil? \
+        || config['flavor_id'].nil? \
+        || config['region_id'].nil?
 
-    # TODO: Some way to gracefully disable the source if the image_id can't
-    # be found
-    def retrieve_image_id
-      name = config['image_name']
-      id = connection.images.select do |i|
-        i.name == name
-      end.first.andand.id
-      add_error "There is no source named #{name}" if id.nil?
-      id
-    end
-
-    # TODO: Some way to gracefully disable the source if the flavor_id can't
-    # be found
-    def retrieve_flavor_id
-      connection.flavors.select{|f| f.name == config['flavor_name']}.first.id
-    end
-
-    # TODO: Some way to gracefully disable the source if the region_id can't
-    # be found
-    def retrieve_region_id
-      connection.regions.select{|r| r.name == config['region_name']}.first.id
+        self.save
+      end
     end
 
     def create_server
