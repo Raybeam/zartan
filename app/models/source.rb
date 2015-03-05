@@ -5,7 +5,7 @@ class Source < ActiveRecord::Base
   validate do |source|
     conf = source.config
     source.class.required_fields.each_key do |field_name|
-      unless conf.has_key? field_name.to_s
+      unless conf.has_key? field_name.to_s and conf[field_name.to_s].present?
         source.errors[:config] << "must contain a '#{field_name}' property."
       end
     end
