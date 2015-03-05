@@ -14,7 +14,7 @@ module Sources
 
     ID_TYPES = ['image', 'flavor', 'region']
 
-    def valid_config?
+    def validate_config!
       valid = false
       begin
         names_to_ids # Force re-evaluation of ids
@@ -36,7 +36,7 @@ module Sources
     end
 
     def server_by_proxy(proxy)
-      return NoServer unless valid_config?
+      return NoServer unless validate_config!
       server = connection.servers.select do |s|
         s.public_ip_address == proxy.host
       end.first

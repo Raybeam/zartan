@@ -61,7 +61,7 @@ module Sources
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
       # Return If we didn't get a server. The child class logs the error
-      return unless valid_config?
+      return unless validate_config!
 
       server = create_server
       if server.wait_for { ready? }

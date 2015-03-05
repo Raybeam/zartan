@@ -29,14 +29,14 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
   context '#provision_proxy' do
     it 'silently ignores when we do not have a valid config' do
-      expect(source).to receive(:valid_config?).and_return(false)
+      expect(source).to receive(:validate_config!).and_return(false)
       expect(source).to receive(:create_server).never
 
       source.send(:provision_proxy, site)
     end
 
     it 'logs an error when the server times out' do
-      expect(source).to receive(:valid_config?).and_return(true)
+      expect(source).to receive(:validate_config!).and_return(true)
       server = double(:wait_for => false, :name => 'foo')
       expect(source).to receive(:create_server).and_return(server)
       expect(source).to receive(:add_error)
@@ -45,7 +45,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
 
     it 'saves a properly created server' do
-      expect(source).to receive(:valid_config?).and_return(true)
+      expect(source).to receive(:validate_config!).and_return(true)
       server = double(:wait_for => double)
       expect(source).to receive(:create_server).and_return(server)
       expect(source).to receive(:save_server)

@@ -61,7 +61,7 @@ class Source < ActiveRecord::Base
   # Pure virtual function intended for child classes to
   # test the saved config by connecting to the remote source.
   # Not part of standard validation because of external dependency
-  def valid_config?
+  def validate_config!
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 

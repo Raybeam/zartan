@@ -6,14 +6,14 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     ProxyPerformance.create(:proxy => proxy, :site => site)
   end
 
-  context '#valid_config?' do
+  context '#validate_config!' do
     it 'identifies a valid config' do
       expect(source).to receive(:names_to_ids)
       expect(source).to receive(:image_id).and_return 1
       expect(source).to receive(:flavor_id).and_return 2
       expect(source).to receive(:region_id).and_return 3
 
-      expect(source.valid_config?).to be_truthy
+      expect(source.validate_config!).to be_truthy
     end
 
     it 'identifies an invalid config when an id is nil' do
@@ -22,20 +22,20 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:flavor_id).and_return 2
       expect(source).to receive(:region_id).and_return nil
 
-      expect(source.valid_config?).to be_falsey
+      expect(source.validate_config!).to be_falsey
     end
 
     it 'identifies an invalid config when we fail to connect' do
       expect(source).to receive(:names_to_ids).
         and_raise(Excon::Errors::Unauthorized.new('test_error'))
 
-      expect(source.valid_config?).to be_falsey
+      expect(source.validate_config!).to be_falsey
     end
   end
 
   context '#server_by_proxy' do
     it 'retrieves a server that matches the proxy' do
-      expect(source).to receive(:valid_config?).and_return(true)
+      expect(source).to receive(:validate_config!).and_return(true)
       server1 = double('server1', :public_ip_address => '172.0.0.1')
       server2 = double('server2', :public_ip_address => proxy.host)
       connection = double('connection', :servers => [server1, server2])
@@ -45,13 +45,13 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
 
     it 'returns NoServer if we do not have a valid config' do
-      expect(source).to receive(:valid_config?).and_return(false)
+      expect(source).to receive(:validate_config!).and_return(false)
 
       expect(source.send(:server_by_proxy, proxy)).to be Sources::Fog::NoServer
     end
 
     it 'returns NoServer if we could not find the server' do
-      expect(source).to receive(:valid_config?).and_return(true)
+      expect(source).to receive(:validate_config!).and_return(true)
       server1 = double('server1', :public_ip_address => '172.0.0.1')
       server2 = double('server2', :public_ip_address => '10.0.0.0')
       connection = double('connection', :servers => [server1, server2])
