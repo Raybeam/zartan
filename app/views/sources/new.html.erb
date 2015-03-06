@@ -28,7 +28,7 @@
     <div class="col-sm-9">
       <select id="typeSelector" class="form-control">
         <option disabled selected>Select Type</option>
-        <% Source.source_types.each do |source_type| %>
+        <% @source_types.each do |source_type| %>
           <option value="<%= source_type.name.gsub(/::/,'') %>"><%= source_type.display_name %></option>
         <% end %>
       </select>
@@ -56,7 +56,7 @@
 <% end %>
 
 <div id="configForms">
-  <% Source.source_types.each do |source_type| %>
+  <% @source_types.each do |source_type| %>
     <div id="sourceType<%= source_type.name.gsub(/::/,'') %>" class="configBlock">
       <input type="hidden" name="source_type" value="<%= source_type.name %>">
       <%= render partial: 'source_config', locals: { source_type: source_type, values: @source.config, show_help: false } %>
