@@ -69,6 +69,10 @@ module Sources
       else
         add_error("Timed out when creating #{server.name}")
       end
+    rescue => e
+      # Since this is within a thread we do not want one thread to kill
+      # all the child threads.  Log the error in redis
+      add_error "#{e.inspect}\n#{e.backtrace.join("\n")}"
     end
 
     # save_server()

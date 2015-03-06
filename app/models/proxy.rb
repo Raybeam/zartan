@@ -29,6 +29,11 @@ class Proxy < ActiveRecord::Base
     end
   end
 
+  def transaction_options
+    return {isolation: :serializable} if Rails.env.production?
+    {}
+  end
+
   # Check to make sure the proxy is a candidate for being decomissioned.
   # If any sites are still using the proxy then leave it be.
   # If no sites are still using the proxy, soft-delete the proxy and perform
@@ -36,7 +41,7 @@ class Proxy < ActiveRecord::Base
   def decommission
     actually_decomission = false
 
-    self.transaction isolation: :serializable do
+    self.transaction(transaction_options) do
       if self.no_sites?
         # soft-delete the proxy so that nobody else tries to use it
         self.soft_delete
