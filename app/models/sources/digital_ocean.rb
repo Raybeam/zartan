@@ -117,7 +117,5 @@ module Sources
         region_id: region_id
       )
     end
-
-    Source.source_types << self
   end
 end
