@@ -7,8 +7,8 @@ Rails.application.routes.draw do
   resources :sources, except: %i(destroy)
   resources :proxies, only: %i(show)
   
-  get 'config',     to: 'config#show', as: :config
-  get 'config/set', to: 'config#set', as: :config_set
+  get 'config',      to: 'config#show', as: :config
+  post 'config/set', to: 'config#set', as: :config_set
   
   root to: 'sites#index'
 end
