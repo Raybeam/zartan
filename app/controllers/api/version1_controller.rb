@@ -3,13 +3,14 @@ module Api
     before_filter :set_site
     
     def get_proxy
-      result = @site.select_proxy(params[:older_than])
+      older_than = (params[:older_than] || -1).to_i
+      result = @site.select_proxy(older_than)
       if result == Proxy::NoProxy
-        render json: Response::try_again
+        render json: Responses::try_again
       elsif result.is_a? Proxy::NoColdProxy
-        render json: Response::try_again(result.timeout)
+        render json: Responses::try_again(result.timeout)
       else
-        render json: Response::success(result)
+        render json: Responses::success(result)
       end
     end
     
@@ -24,7 +25,7 @@ module Api
       rescue ActiveRecord::RecordNotFound => e
         # Swallow not-found-type errors
       end
-      render json: Response::success
+      render json: Responses::success
     end
     
     private
