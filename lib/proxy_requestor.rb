@@ -11,9 +11,11 @@ class ProxyRequestor
 
   def run
     init_counters
-    performances.each do |perform|
-      remaining_proxies_needed = add_existing_proxies(perform)
-      provision_proxies(perform, remaining_proxies_needed)
+    if @proxies_needed > 0
+      performances.each do |perform|
+        remaining_proxies_needed = add_existing_proxies(perform)
+        provision_proxies(perform, remaining_proxies_needed)
+      end
     end
   end
 
@@ -60,7 +62,7 @@ class ProxyRequestor
       site: site,
       max_proxies: num_proxies_to_request
     )
-    site.add_proxies(proxies)
+    site.add_proxies(*proxies)
     @proxies_needed -= proxies.length
     @ratio_sum -= perform.success_ratio
 

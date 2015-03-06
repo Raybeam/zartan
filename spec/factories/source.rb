@@ -6,9 +6,12 @@ FactoryGirl.define do
     
     after(:build) do |source|
       source.config = {
-        username: "username",
-        password: "password",
-        image_name: "image"
+        'client_id' => "DEADBEEF_ID",
+        'api_key' => "DEADBEEF_KEY",
+        'image_name' => "image",
+        'flavor_name' => "1337MB",
+        'region_name' => "Nowhere 3",
+        'proxy_port' => 2341
       }
     end
   end

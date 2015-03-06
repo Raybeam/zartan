@@ -23,6 +23,12 @@ class Proxy < ActiveRecord::Base
     end
   end
 
+  def queue_decommission
+    if self.no_sites?
+      Resque.enqueue(Jobs::DecommissionProxy, self.id)
+    end
+  end
+
   # Check to make sure the proxy is a candidate for being decomissioned.
   # If any sites are still using the proxy then leave it be.
   # If no sites are still using the proxy, soft-delete the proxy and perform
@@ -33,7 +39,7 @@ class Proxy < ActiveRecord::Base
     self.transaction isolation: :serializable do
       if self.no_sites?
         # soft-delete the proxy so that nobody else tries to use it
-        self.touch :deleted_at
+        self.soft_delete
         self.save
         # Decomission the proxy outside of the transaction
         actually_decomission = true
@@ -48,7 +54,7 @@ class Proxy < ActiveRecord::Base
   def no_sites?
     self.proxy_performances.active.empty?
   end
-  
+
   NoProxy = Class.new
   NoColdProxy = Struct.new(:timeout)
 end

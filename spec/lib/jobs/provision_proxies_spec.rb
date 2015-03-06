@@ -11,7 +11,6 @@ RSpec.describe Jobs::ProvisionProxies do
         create(:proxy, host: 'foobar.com', port: 80)
       ]
       expect(source).to receive(:provision_proxies).and_return(proxies)
-      expect(site).to receive(:add_proxies)
 
       Jobs::ProvisionProxies.perform(site.id, source.id, 2)
     end

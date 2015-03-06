@@ -1,6 +1,12 @@
 class Source < ActiveRecord::Base
   has_many :proxies, dependent: :destroy, inverse_of: :source
-  
+
+  before_validation :save_config
+
+  # Redis-backed properties
+  include Redis::Objects
+  list :persistent_errors
+
   # Ensure all of the necessary configuration options are set
   validate do |source|
     conf = source.config
@@ -12,23 +18,32 @@ class Source < ActiveRecord::Base
   end
 
   def config
-    JSON.parse(read_attribute(:config))
+    @config ||= JSON.parse(read_attribute(:config))
   end
   
   def config=(new_value)
-    write_attribute(:config, new_value.to_json)
+    @config = new_value
+  end
+
+  def save_config
+    write_attribute(:config, @config.to_json) if @config
   end
   
   SourceConflict = Struct.new(:conflict_exists?)
 
   # Pure virtual function intended for child classes to free the proxy resources
+  # Parameters:
+  #   proxy - The proxy object that is to be decommissioned
   def decommission_proxy(proxy)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
   # Pure virtual function intended for child classes to create
   # the proxy resources
-  def provision_proxies(num_proxies)
+  # Parameters:
+  #   num_proxies - How many proxies to create
+  #   site - what site to add the proxies to after they're created
+  def provision_proxies(num_proxies, site)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
@@ -43,6 +58,13 @@ class Source < ActiveRecord::Base
     desired_proxy_count - self.proxies.length
   end
 
+  # Pure virtual function intended for child classes to
+  # test the saved config by connecting to the remote source.
+  # Not part of standard validation because of external dependency
+  def validate_config!
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+  end
+
   # return the number of proxies that would exist if up to num_requested
   # proxies were provisioned
   def desired_proxy_count(num_requested)
@@ -53,13 +75,19 @@ class Source < ActiveRecord::Base
 
   # Helper method for child classes to use to add a new proxy to the database
   # when the host and port have been created
-  def add_proxy(host, port)
+  def add_proxy(host, port, site)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
     return if fix_source_conflicts(proxy).conflict_exists?
     proxy.source = self
-
     proxy.save
+    site.add_proxies(proxy)
+  end
+
+  # If a systemic error occurs while provisioning proxies then it gets
+  # reported here
+  def add_error(error_string)
+    persistent_errors << error_string
   end
 
   private
@@ -86,8 +114,7 @@ class Source < ActiveRecord::Base
     end
     conflict
   end
-  
-  
+
   class << self
     def required_fields
       raise NotImplementedError, "Implement #{__callee__} in #{self.to_s}"
