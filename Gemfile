@@ -36,6 +36,9 @@ gem 'redis-objects'
 # Use resque to asyncronously run long-running jobs
 gem 'resque'
 
+# UI
+gem 'twitter-bootstrap-rails'
+
 # Fog supports many different cloud computing services
 gem 'fog'
 

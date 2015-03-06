@@ -37,8 +37,25 @@ module Zartan
       @config_cache = {}
       self
     end
+    
+    def keys
+      raw_keys.collect { |k| k.gsub /^config\./, '' }
+    end
   
     private
+    def raw_keys
+      if @raw_keys.nil?
+        @raw_keys = []
+        cursor = '0'
+        loop do
+          cursor, key_batch = connection.scan(cursor, match: 'config.*')
+          @raw_keys += key_batch
+          break if cursor == '0'
+        end
+      end
+      @raw_keys
+    end
+    
     def key_for name
       "config.#{name}"
     end

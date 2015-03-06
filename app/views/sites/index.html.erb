@@ -1,0 +1,24 @@
+<div class="page-header">
+  <h1>Sites</h1>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Proxies (min/current/max)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @sites.each do |site| %>
+      <tr>
+        <td><%= link_to site.name, site_path(site) %></td>
+        <td>
+          <span class="text-muted"><%= site.min_proxies %> /</span>
+          <strong><%= site.proxy_performances.active.count %></strong>
+          <span class="text-muted">/ <%= site.max_proxies %></span>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

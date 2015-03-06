@@ -1,0 +1,42 @@
+<div class="page-header">
+  <h1>Proxy <%= @proxy.host %>:<%= @proxy.port %></h1>
+</div>
+
+<dl class="dl-horizontal">
+  <dt><strong>Source:</strong></dt>
+  <dd><%= link_to @proxy.source.name, source_path(@proxy.source) %> (<%= @proxy.source.class.display_name %>)</dd>
+</dl>
+
+<h2>
+  Site Performance
+</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Site</th>
+      <th>Total Attempts</th>
+      <th>Successes</th>
+      <th>Failures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @proxy.proxy_performances.active.count > 0 %>
+      <% @proxy.proxy_performances.active.each do |perf| %>
+        <% s, f = perf.times_succeeded, perf.times_failed %>
+        <tr>
+          <td><%= link_to perf.site.name, site_path(perf.site) %></td>
+          <td><%= s + f %>
+          <td><%= s %> <% if s + f > 0 %>(<%= (100 * s.to_f / (s + f)).round(2) %>%)<% end %></td>
+          <td><%= f %> <% if s + f > 0 %>(<%= (100 * f.to_f / (s + f)).round(2) %>%)<% end %></td>
+        </tr>
+      <% end %>
+    <% else %>
+      <tr>
+        <td colspan="4">
+          <p class="lead text-center">This proxy isn't associated with any sites yet.</p>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

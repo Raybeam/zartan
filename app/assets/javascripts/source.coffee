@@ -1,3 +1,8 @@
-# Place all the behaviors and hooks related to the matching controller here.
-# All this logic will automatically be available in application.js.
-# You can use CoffeeScript in this file: http://coffeescript.org/
+# Set up an event handler that triggers when the type selector is changed on
+# the new site form. The handler ensures the form displays the correct fields
+# for the selected source type.
+$(document).on 'change', '#typeSelector', ->
+  visibleConfig = $('#configTarget .configBlock')
+  selected = $('#sourceType' + $(this).val())
+  $('#configForms').append visibleConfig
+  $('#configTarget').append selected

@@ -1,0 +1,31 @@
+<div class="page-header">
+  <span class="pull-right">
+    <%= link_to "Back", sources_path, :class => 'btn btn-default'  %>
+    <%= link_to "Edit", edit_source_path(@source), :class => 'btn btn-default' %>
+  </span>
+  <h1>Source <%= @source.name %></h1>
+</div>
+
+<dl class="dl-horizontal">
+  <dt><strong>Source Type:</strong></dt>
+  <dd><%= @source.class.display_name %></dd>
+  <dt><strong>Reliability Score:</strong></dt>
+  <dd><%= @source.reliability %></dd>
+  <% @source.class.required_fields.each_pair do |field, type| %>
+    <% unless type == :password %>
+      <dt><strong><%= field %>:</strong></dt>
+      <dd><%= @source.config[field.to_s] %></dd>
+    <% end %>
+  <% end %>
+</dl>
+
+<h2>
+  Proxies
+  <small>Current: <%= @source.proxies.active.count %>; Max: <%= @source.max_proxies %>
+</h2>
+
+<div class="list-group">
+  <% @source.proxies.active.each do |proxy| %>
+    <%= link_to "#{proxy.host}:#{proxy.port}", proxy_path(proxy), :class => 'list-group-item' %>
+  <% end %>
+</div>

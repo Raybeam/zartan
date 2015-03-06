@@ -1,14 +1,38 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Zartan</title>
-  <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
-  <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
-  <%= csrf_meta_tags %>
-</head>
-<body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= content_for?(:title) ? yield(:title) : "Zartan" %></title>
+    <%= csrf_meta_tags %>
 
-<%= yield %>
+    <%= stylesheet_link_tag "application", :media => "all" %>
+    <%= javascript_include_tag "application" %>
+  </head>
+  <body>
 
-</body>
+    <%= nav_bar brand: 'Zartan', static: :top, responsive: true do %>
+      <%= menu_group do %>
+        <%= menu_item "Sites", sites_path %>
+        <%= menu_item "Sources", sources_path %>
+        <%= menu_item "Settings", config_path %>
+      <% end %>
+    <% end %>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <%= bootstrap_flash %>
+          <%= yield %>
+        </div>
+      </div><!--/row-->
+
+      <footer>
+        <p>&copy; Raybeam 2015</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+  </body>
 </html>

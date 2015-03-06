@@ -1,0 +1,14 @@
+<% source_type.required_fields.each_pair do |name, type| %>
+  <% name = name.to_s %>
+  <div class="form-group">
+    <label for="source<%= source_type.name.gsub(/::/,'') + name.capitalize %>" class="control-label col-sm-3"><%= name %></label>
+    <div class="col-sm-9">
+      <% if type == :password %>
+        <input type="password" name="config[<%= name %>]" class="form-control" id="source<%= source_type.name.gsub(/::/,'') + name.capitalize %>">
+        <% if show_help %><span class="help-block">Leave this blank to keep the same <%= name %>, or fill in a new <%= name %> to reset it.</span><% end %>
+      <% else %>
+        <input type="text" name="config[<%= name %>]" class="form-control" id="source<%= source_type.name.gsub(/::/,'') + name.capitalize %>" value="<%= values.fetch(name,'') %>" placeholder="<%= name %>">
+      <% end %>
+    </div>
+  </div>
+<% end %>
