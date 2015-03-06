@@ -1,0 +1,61 @@
+<div class="page-header">
+  <span class="pull-right">
+    <%= link_to "Back", sites_path, class: 'btn btn-default' %>
+  </span>
+  <h1>Site <%= @site.name %></h1>
+</div>
+
+<%= form_for @site, url: {action: 'update'}, html: {class: 'form-horizontal'} do |f| %>
+  <div class="form-group">
+    <label for="minProxyField" class="control-label col-sm-3">Min proxies</label>
+    <div class="col-sm-9">
+      <div class="form-inline">
+        <div class="input-group">
+          <input type="text" name="site[min_proxies]" id="minProxyField" class="form-control" placeholder="Min proxies" value="<%= @site.min_proxies %>">
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default">Update</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="maxProxyField" class="control-label col-sm-3">Max proxies</label>
+    <div class="col-sm-9">
+      <div class="form-inline">
+        <div class="input-group">
+          <input type="text" name="site[max_proxies]" id="maxProxyField" class="form-control" placeholder="Max proxies" value="<%= @site.max_proxies %>">
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default">Update</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<h2>Proxies</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Address</th>
+      <th>Source (Source Type)</th>
+      <th>Total Attempts</th>
+      <th>Successes</th>
+      <th>Failures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @site.proxy_performances.each do |perf| %>
+      <% proxy, s, f = perf.proxy, perf.times_succeeded, perf.times_failed %>
+      <tr>
+        <td><%= link_to "#{proxy.host}:#{proxy.port}", proxy_path(proxy) %></td>
+        <td><%= link_to proxy.source.name, source_path(proxy.source) %> (<%= proxy.source.class.display_name %>)</td>
+        <td><%= s + f %></td>
+        <td><%= s %> <% if s + f > 0 %>(<%= (100 * s.to_f / (s + f)).round(2) %>%)<% end %></td>
+        <td><%= f %> <% if s + f > 0 %>(<%= (100 * f.to_f / (s + f)).round(2) %>%)<% end %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
