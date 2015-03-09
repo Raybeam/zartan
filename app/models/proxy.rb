@@ -25,13 +25,8 @@ class Proxy < ActiveRecord::Base
 
   def queue_decommission
     if self.no_sites?
-      Resque.enqueue(Jobs::DecommissionProxy, self.id)
+      Resque.enqueue_to(self.source.class.queue, Jobs::DecommissionProxy, self.id)
     end
-  end
-
-  def transaction_options
-    return {isolation: :serializable} if Rails.env.production?
-    {}
   end
 
   # Check to make sure the proxy is a candidate for being decomissioned.
@@ -41,7 +36,7 @@ class Proxy < ActiveRecord::Base
   def decommission
     actually_decomission = false
 
-    self.transaction(transaction_options) do
+    self.transaction(Rails.config.default_transaction_options) do
       if self.no_sites?
         # soft-delete the proxy so that nobody else tries to use it
         self.soft_delete

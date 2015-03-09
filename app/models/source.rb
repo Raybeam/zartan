@@ -52,7 +52,7 @@ class Source < ActiveRecord::Base
   def enqueue_provision(site:, num_proxies:)
     return 0 if num_proxies <= 0 || self.proxies.active.length >= self.max_proxies
     desired_proxy_count = self.desired_proxy_count(num_proxies)
-    Resque.enqueue(Jobs::ProvisionProxies,
+    Resque.enqueue_to(self.class.queue, Jobs::ProvisionProxies,
       site.id, self.id, desired_proxy_count
     )
     desired_proxy_count - self.proxies.active.length
@@ -116,6 +116,14 @@ class Source < ActiveRecord::Base
   end
 
   class << self
+    # queue()
+    # Each source gets its own queue for provisioning and decommissioning
+    # proxies.  Get the name of that queue as a string
+    def queue
+      # gsub keeps only the portion after the last slash
+      self.to_s.underscore.gsub(%r{^.*/(\w+)$}, '\1')
+    end
+
     def required_fields
       raise NotImplementedError, "Implement #{__callee__} in #{self.to_s}"
     end
