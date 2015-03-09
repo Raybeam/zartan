@@ -1,5 +1,5 @@
 class SourcesController < ApplicationController
-  before_filter :assign_source, only: %i(edit update show)
+  before_filter :assign_source, only: %i(edit update show clear_errors)
   
   def index
   end
@@ -45,6 +45,11 @@ class SourcesController < ApplicationController
   end
   
   def show
+  end
+  
+  def clear_errors
+    @source.persistent_errors.clear
+    redirect_to source_path(@source)
   end
   
   private
