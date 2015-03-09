@@ -16,7 +16,12 @@
   <tbody>
     <% Source.all.each do |source| %>
       <tr>
-        <td><%= link_to source.name, source_path(source) %></td>
+        <td>
+          <%= link_to source.name, source_path(source) %>
+          <% unless source.persistent_errors.empty? %>
+            <span class="label label-danger"><%= pluralize(source.persistent_errors.count,"error") %></span>
+          <% end %>
+        </td>
         <td><%= source.class.display_name %></td>
         <td><%= source.proxies.active.count %> / <%= source.max_proxies %></td>
         <td>

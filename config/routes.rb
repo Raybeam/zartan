@@ -9,7 +9,9 @@ Rails.application.routes.draw do
   
   # Admin UI Routes
   resources :sites, only: %i(index show update)
-  resources :sources, except: %i(destroy)
+  resources :sources, except: %i(destroy) do
+    post 'clear_errors', on: :member
+  end
   resources :proxies, only: %i(show)
   
   get 'config',      to: 'config#show', as: :config
