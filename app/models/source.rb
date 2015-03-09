@@ -120,8 +120,8 @@ class Source < ActiveRecord::Base
     # Each source gets its own queue for provisioning and decommissioning
     # proxies.  Get the name of that queue as a string
     def queue
-      # gsub keeps only the portion after the last slash
-      self.to_s.underscore.gsub(%r{^.*/(\w+)$}, '\1')
+      # Keeps only the portion after the last slash
+      self.name.underscore.split(%r[/]).last
     end
 
     def required_fields
