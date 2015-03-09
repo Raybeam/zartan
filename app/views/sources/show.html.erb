@@ -19,9 +19,24 @@
   <% end %>
 </dl>
 
+<% unless @source.persistent_errors.empty? %>
+  <h2>
+    <%= form_for @source, url: {action: 'clear_errors'}, method: 'POST', html: {class: 'form-inline pull-right'} do |f| %>
+      <button type="submit" class="btn btn-default">Clear Errors</button>
+    <% end %>
+    Errors
+  </h2>
+
+  <ul class="list-group">
+    <% @source.persistent_errors.each do |err| %>
+      <li class="list-group-item list-group-item-danger"><%= err %></li>
+    <% end %>
+  </ul>
+<% end %>
+
 <h2>
   Proxies
-  <small>Current: <%= @source.proxies.active.count %>; Max: <%= @source.max_proxies %>
+  <small>Current: <%= @source.proxies.active.count %>; Max: <%= @source.max_proxies %></small>
 </h2>
 
 <div class="list-group">
