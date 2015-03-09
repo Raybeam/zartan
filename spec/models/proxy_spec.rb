@@ -114,7 +114,7 @@ RSpec.describe Proxy, type: :model do
 
     it 'queues the decommission of an unused proxy' do
       expect(proxy).to receive(:no_sites?).and_return(true)
-      expect(Resque).to receive(:enqueue)
+      expect(Resque).to receive(:enqueue_to)
 
       proxy.queue_decommission
     end

@@ -52,8 +52,12 @@ class ProxyRequestor
   end
 
   def num_proxies_by_performance(perform)
-    return @proxies_needed.to_f if @ratio_sum == 0
-    (@proxies_needed * perform.success_ratio / @ratio_sum).round
+    if @ratio_sum <= 0.0
+      num_proxies = @proxies_needed.to_f / Source.count
+    else
+      num_proxies = @proxies_needed.to_f * perform.success_ratio / @ratio_sum
+    end
+    num_proxies.round
   end
 
   # Takes existing proxies from the database and adds them to the site

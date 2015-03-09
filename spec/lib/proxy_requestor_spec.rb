@@ -57,12 +57,31 @@ RSpec.describe ProxyRequestor do
     end
   end
 
-  context '#add_existing_proxies' do
-    before :each do
+  context '#num_proxies_by_performance' do
+    it 'evenly divides the proxies if we have no statistics' do
+      requestor.instance_variable_set(:@ratio_sum, 0.0)
+      requestor.instance_variable_set(:@proxies_needed, 7)
+      expect(Source).to receive(:count).and_return(2)
+
+      expect(requestor.send(:num_proxies_by_performance, double)).to eq 4
+    end
+
+    it 'calculates the proxies needed based on statistics' do
+      perform = double(:success_ratio => 0.6666667)
       requestor.instance_variable_set(:@proxies_needed, 100)
       requestor.instance_variable_set(:@ratio_sum, 1.0)
+
+      expect(requestor.send(:num_proxies_by_performance, perform)).to eq 67
+    end
+  end
+
+  context '#add_existing_proxies' do
+    before :each do
       allow(requestor).to receive(:site).and_return(site)
       expect(site).to receive(:add_proxies)
+      requestor.instance_variable_set(:@proxies_needed, 100)
+      requestor.instance_variable_set(:@ratio_sum, 1.0)
+      expect(requestor).to receive(:num_proxies_by_performance).and_return(75)
     end
 
     it 'does not need to partition more proxies' do

@@ -4,6 +4,9 @@ RSpec.describe Source, type: :model do
 
   let(:source) {create(:digital_ocean_source)}
   let(:proxy) {create(:proxy)}
+  let(:deleted_proxy) do
+    create(:proxy, :host => 'deleted_host', :deleted_at => Time.now)
+  end
   let(:site) {create(:site)}
 
   describe "redis interactions" do
@@ -49,7 +52,7 @@ RSpec.describe Source, type: :model do
 
     context 'Resque job queued' do
       before(:each) do
-        expect(Resque).to receive(:enqueue)
+        expect(Resque).to receive(:enqueue_to)
       end
 
       it 'queues more proxies to be created' do
@@ -59,7 +62,7 @@ RSpec.describe Source, type: :model do
       end
 
       it 'returns the number of proxies queued for creation' do
-        source.proxies << proxy
+        source.proxies.concat(proxy, deleted_proxy)
         source.save
         expect(
           source.enqueue_provision(site: site, num_proxies:1)
@@ -68,7 +71,7 @@ RSpec.describe Source, type: :model do
 
       it 'caps the return value if we reach capacity' do
         source.max_proxies = 2
-        source.proxies << proxy
+        source.proxies.concat(proxy, deleted_proxy)
         source.save
         expect(
           source.enqueue_provision(site: site, num_proxies:2)
@@ -83,7 +86,7 @@ RSpec.describe Source, type: :model do
     end
 
     it 'returns the number of proxies that would exist if more were created' do
-      source.proxies.concat(proxy, create(:proxy, host: 'host2'))
+      source.proxies.concat(proxy, create(:proxy, host: 'host2'), deleted_proxy)
       expect(source.desired_proxy_count(1)).to eq 3
     end
   end
@@ -96,6 +99,7 @@ RSpec.describe Source, type: :model do
     it 'adds a proxy' do
       conflict = double(:conflict_exists? => false)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
+      expect(site).to receive(:add_proxies)
 
       source.send(:add_proxy, proxy.host, proxy.port, site)
       expect(proxy.source).to be source
@@ -136,6 +140,12 @@ RSpec.describe Source, type: :model do
       expect(better_source).to receive(:decommission_proxy).never
       expect(source).to receive(:decommission_proxy)
       expect(source.send(:fix_source_conflicts, proxy).conflict_exists?).to be_truthy
+    end
+  end
+
+  context '#queue' do
+    it 'generates the name of the queue without slashes or colons' do
+      expect(source.class.queue).to eq "digital_ocean"
     end
   end
 end

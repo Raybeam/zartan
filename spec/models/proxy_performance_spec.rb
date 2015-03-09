@@ -4,7 +4,37 @@ RSpec.describe ProxyPerformance, type: :model do
   let(:site) {create(:site)}
   let(:proxy) {create(:proxy)}
   let(:proxy_performance) do
-    ProxyPerformance.create(:proxy => proxy, :site => site)
+    @proxy_performance ||= ProxyPerformance.create(
+      :proxy => proxy, :site => site
+    )
+  end
+
+  context '#restore_or_create' do
+    after :each do
+      proxy_performance.reload
+      expect(proxy_performance.id).to eq 1
+      expect(proxy_performance.deleted_at).to be_nil
+      expect(proxy_performance.times_succeeded).to eq 0
+      expect(proxy_performance.times_failed).to eq 0
+      expect(proxy_performance.reset_at).to be_nil
+    end
+
+    it 'restores an existing ProxyPerformance object' do
+      proxy_performance.touch :deleted_at
+      proxy_performance.save
+
+      returned_perform = ProxyPerformance.restore_or_create(
+        site: site, proxy: proxy
+      )
+
+      expect(returned_perform.id).to eq proxy_performance.id
+    end
+
+    it 'creates a new ProxyPerformance object' do
+      @proxy_performance = ProxyPerformance.restore_or_create(
+        site: site, proxy: proxy
+      )
+    end
   end
 
   context '#increment' do

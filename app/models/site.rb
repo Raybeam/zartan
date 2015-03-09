@@ -102,7 +102,7 @@ class Site < ActiveRecord::Base
 
   # Take one or more proxies and add them to the site in both postgres and redis
   def add_proxies(*new_proxies)
-    self.transaction(Rails.config.default_transaction_options) do
+    self.transaction(Zartan::Application.config.default_transaction_options) do
       restore_or_create_performances(new_proxies)
       new_proxies.each {|p| self.enable_proxy p}
     end

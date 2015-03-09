@@ -36,7 +36,7 @@ class Proxy < ActiveRecord::Base
   def decommission
     actually_decomission = false
 
-    self.transaction(Rails.config.default_transaction_options) do
+    self.transaction(Zartan::Application.config.default_transaction_options) do
       if self.no_sites?
         # soft-delete the proxy so that nobody else tries to use it
         self.soft_delete
