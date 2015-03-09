@@ -1,5 +1,5 @@
 FactoryGirl.define do
   factory :site do
-    name "example.com"
+    sequence(:name) { |n| "site#{n}.example.com" }
   end
 end

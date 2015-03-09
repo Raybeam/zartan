@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :proxy do
-    host "example.com"
-    port 12345
+    sequence(:host) { |n| "proxy#{n}.example.com" }
+    sequence(:port) { |n| 10000 + n }
     
     association :source, factory: :digital_ocean_source
   end
