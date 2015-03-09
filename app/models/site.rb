@@ -102,9 +102,10 @@ class Site < ActiveRecord::Base
 
   # Take one or more proxies and add them to the site in both postgres and redis
   def add_proxies(*new_proxies)
-    self.proxies.concat(*new_proxies)
-    self.save
-    new_proxies.each {|p| self.enable_proxy p}
+    self.transaction(Zartan::Application.config.default_transaction_options) do
+      restore_or_create_performances(new_proxies)
+      new_proxies.each {|p| self.enable_proxy p}
+    end
   end
 
   # global_performance_analysis!()
@@ -134,6 +135,12 @@ class Site < ActiveRecord::Base
   end
 
   private
+
+  def restore_or_create_performances(new_proxies)
+    new_proxies.each do |proxy|
+      ProxyPerformance.restore_or_create(proxy: proxy, site: self)
+    end
+  end
 
   # disable_proxy_if_bad(proxy)
   # Run a performance analysis on a single proxy associated with the site.
@@ -220,7 +227,7 @@ class Site < ActiveRecord::Base
   #   proxy: The prxoy that the report pertains to
   #   report: A Site::PerformanceReport object
   def update_long_term_performance(proxy, report)
-    ProxyPerformance.find(:proxy => proxy, :site => self).increment(
+    ProxyPerformance.find_or_create_by(:proxy => proxy, :site => self).increment(
       times_succeeded: report.times_succeeded,
       times_failed: report.times_failed
     )

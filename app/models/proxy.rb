@@ -6,11 +6,11 @@ class Proxy < ActiveRecord::Base
   include Concerns::SoftDeletable
 
   class << self
-    # Retrieve proxies from the database from a specific source that are
+    # Retrieve active proxies from the database from a specific source that are
     # currently unaffiliated with a site
     def retrieve(source:, site:, max_proxies:)
       assosciated_proxy_ids = ProxyPerformance.where(site: site).map(&:proxy_id)
-      self.where(source: source).reject { |p|
+      self.active.where(source: source).reject { |p|
         assosciated_proxy_ids.include? p.id
       }.take(max_proxies)
     end
@@ -25,7 +25,7 @@ class Proxy < ActiveRecord::Base
 
   def queue_decommission
     if self.no_sites?
-      Resque.enqueue(Jobs::DecommissionProxy, self.id)
+      Resque.enqueue_to(self.source.class.queue, Jobs::DecommissionProxy, self.id)
     end
   end
 
@@ -36,7 +36,7 @@ class Proxy < ActiveRecord::Base
   def decommission
     actually_decomission = false
 
-    self.transaction isolation: :serializable do
+    self.transaction(Zartan::Application.config.default_transaction_options) do
       if self.no_sites?
         # soft-delete the proxy so that nobody else tries to use it
         self.soft_delete

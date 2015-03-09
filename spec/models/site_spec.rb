@@ -3,8 +3,9 @@ require 'rails_helper'
 RSpec.describe Site, type: :model do
   let(:site) {create(:site)}
   let(:proxy) {create(:proxy)}
+  let(:proxy2) {create(:proxy, :host => 'host2')}
   let(:proxy_performance) do
-    ProxyPerformance.create(:proxy => proxy, :site => site)
+    create(:proxy_performance, :proxy => proxy, :site => site)
   end
 
   describe "redis interactions" do
@@ -182,12 +183,11 @@ RSpec.describe Site, type: :model do
     end
 
     it "should add proxies to both redis and postgres" do
-      expect(site).to receive(:enable_proxy)
+      expect(site).to receive(:restore_or_create_performances)
+      expect(site).to receive(:enable_proxy).twice
+      expect(site).to receive(:transaction).and_yield
 
-      site.add_proxies(proxy)
-
-      expect(ProxyPerformance.where(:proxy => proxy, :site => site).exists?).
-        to be_truthy
+      site.add_proxies(proxy, proxy2)
     end
 
     context '#generate_proxy_report' do
@@ -238,6 +238,14 @@ RSpec.describe Site, type: :model do
     it "should run a performance analysis on a single proxy" do
       expect(site).to receive(:disable_proxy_if_bad)
       site.proxy_performance_analysis! proxy
+    end
+  end
+
+  context '#restore_or_create_performances' do
+    it 'restores or creates multiple proxies' do
+      expect(ProxyPerformance).to receive(:restore_or_create).twice
+
+      site.send(:restore_or_create_performances, [proxy, proxy2])
     end
   end
 
@@ -316,7 +324,8 @@ RSpec.describe Site, type: :model do
   context '#update_long_term_performance' do
     it 'updates long term performance of a site/proxy combination from redis' do
       proxy_performance.save
-      expect(ProxyPerformance).to receive(:find).and_return(proxy_performance)
+      expect(ProxyPerformance).to receive(:find_or_create_by).
+        and_return(proxy_performance)
       times_succeeded = 20
       times_failed = 3
       report = Site::PerformanceReport.new(times_succeeded, times_failed)

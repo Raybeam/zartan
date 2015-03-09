@@ -25,5 +25,8 @@ module Zartan
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
     config.active_record.raise_in_transactional_callbacks = true
+
+    # We should use serialized transactions by default
+    config.default_transaction_options = {isolation: :serializable}
   end
 end

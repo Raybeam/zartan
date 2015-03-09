@@ -10,7 +10,7 @@ RSpec.describe Proxy, type: :model do
   end
   let(:site) {create(:site)}
   let(:proxy_performance) do
-    ProxyPerformance.create(:site => site, :proxy => proxy)
+    create(:proxy_performance, :site => site, :proxy => proxy)
   end
 
   context "SoftDeletable" do
@@ -48,6 +48,17 @@ RSpec.describe Proxy, type: :model do
         :max_proxies => 5
       )
       expect(proxies).to eq [proxy]
+    end
+
+    it 'ignores soft deleted proxies' do
+      proxy.soft_delete
+      proxy.save
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 5
+      )
+      expect(proxies).to eq []
     end
 
     it 'ignores proxies that have been removed from a site' do
@@ -114,7 +125,7 @@ RSpec.describe Proxy, type: :model do
 
     it 'queues the decommission of an unused proxy' do
       expect(proxy).to receive(:no_sites?).and_return(true)
-      expect(Resque).to receive(:enqueue)
+      expect(Resque).to receive(:enqueue_to)
 
       proxy.queue_decommission
     end

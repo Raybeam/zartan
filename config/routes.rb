@@ -1,3 +1,5 @@
+require "resque_web"
+
 Rails.application.routes.draw do
   # API Routes
   # The constraint is necessary to ensure that :site_name can contain dots
@@ -14,6 +16,8 @@ Rails.application.routes.draw do
   end
   resources :proxies, only: %i(show)
   
+  mount ResqueWeb::Engine => "/resque_web"
+
   get 'config',      to: 'config#show', as: :config
   post 'config/set', to: 'config#set', as: :config_set
   
