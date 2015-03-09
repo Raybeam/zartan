@@ -3,8 +3,9 @@ require 'rails_helper'
 RSpec.describe ProxyPerformance, type: :model do
   let(:site) {create(:site)}
   let(:proxy) {create(:proxy)}
+
   let(:proxy_performance) do
-    @proxy_performance ||= ProxyPerformance.create(
+    ProxyPerformance.find_or_create_by(
       :proxy => proxy, :site => site
     )
   end
@@ -31,7 +32,7 @@ RSpec.describe ProxyPerformance, type: :model do
     end
 
     it 'creates a new ProxyPerformance object' do
-      @proxy_performance = ProxyPerformance.restore_or_create(
+      ProxyPerformance.restore_or_create(
         site: site, proxy: proxy
       )
     end

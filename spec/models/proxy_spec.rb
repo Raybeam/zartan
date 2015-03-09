@@ -10,7 +10,7 @@ RSpec.describe Proxy, type: :model do
   end
   let(:site) {create(:site)}
   let(:proxy_performance) do
-    ProxyPerformance.create(:site => site, :proxy => proxy)
+    create(:proxy_performance, :site => site, :proxy => proxy)
   end
 
   context "SoftDeletable" do

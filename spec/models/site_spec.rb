@@ -5,7 +5,7 @@ RSpec.describe Site, type: :model do
   let(:proxy) {create(:proxy)}
   let(:proxy2) {create(:proxy, :host => 'host2')}
   let(:proxy_performance) do
-    ProxyPerformance.create(:proxy => proxy, :site => site)
+    create(:proxy_performance, :proxy => proxy, :site => site)
   end
 
   describe "redis interactions" do

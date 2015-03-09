@@ -3,7 +3,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
   let(:site) {create(:site)}
   let(:proxy) {create(:proxy)}
   let(:proxy_performance) do
-    ProxyPerformance.create(:proxy => proxy, :site => site)
+    create(:proxy_performance, :proxy => proxy, :site => site)
   end
 
   context '#validate_config!' do
