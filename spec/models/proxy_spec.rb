@@ -50,6 +50,17 @@ RSpec.describe Proxy, type: :model do
       expect(proxies).to eq [proxy]
     end
 
+    it 'ignores soft deleted proxies' do
+      proxy.soft_delete
+      proxy.save
+      proxies = Proxy.retrieve(
+        :source => source,
+        :site => site,
+        :max_proxies => 5
+      )
+      expect(proxies).to eq []
+    end
+
     it 'ignores proxies that have been removed from a site' do
       proxy_performance.soft_delete
       proxy_performance.save

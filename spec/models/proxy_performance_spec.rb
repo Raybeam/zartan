@@ -20,7 +20,7 @@ RSpec.describe ProxyPerformance, type: :model do
     end
 
     it 'restores an existing ProxyPerformance object' do
-      proxy_performance.touch :deleted_at
+      proxy_performance.soft_delete
       proxy_performance.save
 
       returned_perform = ProxyPerformance.restore_or_create(

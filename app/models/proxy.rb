@@ -6,11 +6,11 @@ class Proxy < ActiveRecord::Base
   include Concerns::SoftDeletable
 
   class << self
-    # Retrieve proxies from the database from a specific source that are
+    # Retrieve active proxies from the database from a specific source that are
     # currently unaffiliated with a site
     def retrieve(source:, site:, max_proxies:)
       assosciated_proxy_ids = ProxyPerformance.where(site: site).map(&:proxy_id)
-      self.where(source: source).reject { |p|
+      self.active.where(source: source).reject { |p|
         assosciated_proxy_ids.include? p.id
       }.take(max_proxies)
     end
