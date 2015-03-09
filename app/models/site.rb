@@ -109,15 +109,15 @@ class Site < ActiveRecord::Base
   end
 
   # global_performance_analysis!()
-  # Run a performance analysis on all proxies associated with the site.
-  # Consistently successful proxies stay in service while unsuccessful
+  # Run a performance analysis on all proxies currently associated with the
+  # site. Consistently successful proxies stay in service while unsuccessful
   # proxies get pruned.
   # Gets more proxies if there are too few proxies afterwards.
   # Parameters:
   #   None
   def global_performance_analysis!
-    self.proxies.each do |proxy|
-      disable_proxy_if_bad proxy
+    self.proxy_performances.active.each do |proxy_performance|
+      disable_proxy_if_bad proxy_performance.proxy
     end
     request_more_proxies
   end
