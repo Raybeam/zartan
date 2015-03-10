@@ -124,6 +124,10 @@ module Sources
         flavor_id: flavor_id,
         region_id: region_id
       )
+    # Generally get this error when we've hit our limit on # of servers
+    rescue Excon::Errors::Forbidden => e
+      add_error(JSON.parse(e.response.body)['error_message'])
+      NoServer
     end
   end
 end

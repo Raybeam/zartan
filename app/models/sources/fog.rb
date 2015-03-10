@@ -89,6 +89,8 @@ module Sources
       return unless validate_config!
 
       server = create_server
+
+      return if server == NoServer
       if server.wait_for { ready? }
         save_server server, site
       else

@@ -178,6 +178,16 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
       expect(source.send(:create_server)).to be server
     end
+
+    it 'recovers when we have reached our droplet limit' do
+      response = double(:body => ({'error_message' => "droplet limit"}.to_json))
+      expect(source).to receive(:connection).and_raise(
+        Excon::Errors::Forbidden.new("Error", nil, response)
+      )
+      expect(source).to receive(:add_error).with("droplet limit")
+
+      expect(source.send(:create_server)).to be Sources::Fog::NoServer
+    end
   end
 
 end

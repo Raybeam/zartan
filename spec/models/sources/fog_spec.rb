@@ -67,6 +67,14 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       source.send(:provision_proxy, site)
     end
 
+    it 'silently ignores when the client class returns a NoServer object' do
+      expect(source).to receive(:validate_config!).and_return(true)
+      server = Sources::Fog::NoServer
+      expect(source).to receive(:create_server).and_return(server)
+
+      source.send(:provision_proxy, site)
+    end
+
     it 'logs an error when the server times out' do
       expect(source).to receive(:validate_config!).and_return(true)
       server = double(:wait_for => false, :name => 'foo')
