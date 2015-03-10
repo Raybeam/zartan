@@ -47,7 +47,7 @@
     </tr>
   </thead>
   <tbody>
-    <% @site.proxy_performances.each do |perf| %>
+    <% @site.proxy_performances.active.each do |perf| %>
       <% proxy, s, f = perf.proxy, perf.times_succeeded, perf.times_failed %>
       <tr>
         <td><%= link_to "#{proxy.host}:#{proxy.port}", proxy_path(proxy) %></td>
