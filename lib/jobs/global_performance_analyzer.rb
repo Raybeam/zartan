@@ -6,10 +6,9 @@ module Jobs
       end
 
       def perform
-        threads = Site.all.map do |site|
-          Thread.new {site.global_performance_analysis!}
+        Site.all.each do |site|
+          site.global_performance_analysis!
         end
-        threads.each(&:join)
       end
     end
   end
