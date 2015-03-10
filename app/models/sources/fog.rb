@@ -91,12 +91,12 @@ module Sources
     # provision_proxy()
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
-      # the config is invalid. The child class logs the error
+      # The config is invalid. The child class logs the error
       return unless validate_config!
 
-      # Return If we didn't get a server. The child class logs the error
       server = create_server
 
+      # Return If we didn't get a server. The child class logs the error
       return if server == NoServer
       if server.wait_for { ready? }
         save_server server, site
