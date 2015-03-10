@@ -80,14 +80,21 @@ module Sources
       raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
     end
 
+    # validate_config!()
+    # Connect to the cloud service to make sure our config is valid
+    def validate_config!
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
+
     private
 
     # provision_proxy()
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
-      # Return If we didn't get a server. The child class logs the error
+      # the config is invalid. The child class logs the error
       return unless validate_config!
 
+      # Return If we didn't get a server. The child class logs the error
       server = create_server
 
       return if server == NoServer

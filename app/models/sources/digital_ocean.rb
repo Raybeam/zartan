@@ -14,6 +14,7 @@ module Sources
 
     ID_TYPES = ['image', 'flavor', 'region']
 
+    # Connect to Digital Ocean to make sure our config is valid
     def validate_config!
       valid = false
       begin
