@@ -14,6 +14,7 @@ module Sources
 
     ID_TYPES = ['image', 'flavor', 'region']
 
+    # Connect to Digital Ocean to make sure our config is valid
     def validate_config!
       valid = false
       begin
@@ -26,6 +27,14 @@ module Sources
     end
 
     private
+
+    # server_is_proxy_type?(server)
+    # given a server, determine if it is running a proxy
+    def server_is_proxy_type?(server)
+      return server.image_id == self.image_id \
+        && server.region_id == self.region_id \
+        && server.flavor_id == self.flavor_id
+    end
 
     def connection
       @connection ||= ::Fog::Compute.new(
@@ -116,6 +125,10 @@ module Sources
         flavor_id: flavor_id,
         region_id: region_id
       )
+    # Generally get this error when we've hit our limit on # of servers
+    rescue Excon::Errors::Forbidden => e
+      add_error(JSON.parse(e.response.body)['error_message'])
+      NoServer
     end
   end
 end

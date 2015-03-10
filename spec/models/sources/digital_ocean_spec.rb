@@ -33,6 +33,45 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
   end
 
+  context '#server_is_proxy_type?' do
+    it 'identifies a server that runs a proxy' do
+      server = double(
+        image_id: source.config['image_id'],
+        flavor_id: source.config['flavor_id'],
+        region_id: source.config['region_id']
+      )
+
+      expect(source.send(:server_is_proxy_type?, server)).to be_truthy
+    end
+
+    it 'identifies a server that is in a different region' do
+      server = double(
+        image_id: source.config['image_id'],
+        flavor_id: source.config['flavor_id'],
+        region_id: nil
+      )
+      expect(source.send(:server_is_proxy_type?, server)).to be_falsey
+    end
+
+    it 'identifies a server that has a different flavor' do
+      server = double(
+        image_id: source.config['image_id'],
+        flavor_id: nil,
+        region_id: source.config['region_id']
+      )
+      expect(source.send(:server_is_proxy_type?, server)).to be_falsey
+    end
+
+    it 'identifies a server that has a different image' do
+      server = double(
+        image_id: nil,
+        flavor_id: source.config['flavor_id'],
+        region_id: source.config['region_id']
+      )
+      expect(source.send(:server_is_proxy_type?, server)).to be_falsey
+    end
+  end
+
   context '#server_by_proxy' do
     it 'retrieves a server that matches the proxy' do
       expect(source).to receive(:validate_config!).and_return(true)
@@ -69,6 +108,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
 
     it 'translates name to id if the id is not saved' do
+      source.config.delete 'image_id'
       expect(source).to receive(:names_to_ids) {source.config['image_id'] = 1}
 
       expect(source.image_id).to eq 1
@@ -137,6 +177,16 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:region_id).and_return(3)
 
       expect(source.send(:create_server)).to be server
+    end
+
+    it 'recovers when we have reached our droplet limit' do
+      response = double(:body => ({'error_message' => "droplet limit"}.to_json))
+      expect(source).to receive(:connection).and_raise(
+        Excon::Errors::Forbidden.new("Error", nil, response)
+      )
+      expect(source).to receive(:add_error).with("droplet limit")
+
+      expect(source.send(:create_server)).to be Sources::Fog::NoServer
     end
   end
 

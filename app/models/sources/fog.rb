@@ -40,7 +40,26 @@ module Sources
       server.destroy
     end
 
+    # find_orphaned_servers!()
+    # Searches through the list of servers to find any servers that have been
+    # created, but fell through the cracks getting added to the database
+    def find_orphaned_servers!
+      connection.servers.each do |server|
+        if server_is_proxy_type?(server) \
+          && !Proxy.active.where(:host => server.public_ip_address).exists? \
+
+          save_server server
+        end
+      end
+    end
+
     protected
+
+    # server_is_proxy_type?(server)
+    # given a server, determine if it is running a proxy
+    def server_is_proxy_type?(server)
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
 
     # server_by_proxy(proxy)
     # Searches the service for the Fog server object that the proxy runs on
@@ -55,15 +74,30 @@ module Sources
       raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
     end
 
+    # connection()
+    # Returns the connection object for the source
+    def connection
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
+
+    # validate_config!()
+    # Connect to the cloud service to make sure our config is valid
+    def validate_config!
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
+
     private
 
     # provision_proxy()
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
-      # Return If we didn't get a server. The child class logs the error
+      # The config is invalid. The child class logs the error
       return unless validate_config!
 
       server = create_server
+
+      # Return If we didn't get a server. The child class logs the error
+      return if server == NoServer
       if server.wait_for { ready? }
         save_server server, site
       else
@@ -77,7 +111,7 @@ module Sources
 
     # save_server()
     # Wrapper for Source.add_proxy
-    def save_server(server, site)
+    def save_server(server, site = NoSite)
       add_proxy(server.public_ip_address, config['proxy_port'], site)
     end
   end

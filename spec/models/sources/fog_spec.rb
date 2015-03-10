@@ -27,10 +27,50 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
   end
 
+  context '#find_orphaned_servers!' do
+    before :each do
+      @server = double
+      connection = double(:servers => [@server])
+      expect(source).to receive(:connection).and_return(connection)
+    end
+
+    it 'finds a server missing from the database' do
+      expect(@server).to receive(:public_ip_address).and_return('N/A')
+      expect(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(source).to receive(:save_server)
+
+      source.find_orphaned_servers!
+    end
+
+    it 'ignores a server already in the database' do
+      expect(@server).to receive(:public_ip_address).and_return(proxy.host)
+      expect(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(source).to receive(:save_server).never
+
+      source.find_orphaned_servers!
+    end
+
+    it 'ignores a server that does not run a proxy' do
+      expect(@server).to receive(:public_ip_address).never
+      expect(source).to receive(:server_is_proxy_type?).and_return(false)
+      expect(source).to receive(:save_server).never
+
+      source.find_orphaned_servers!
+    end
+  end
+
   context '#provision_proxy' do
     it 'silently ignores when we do not have a valid config' do
       expect(source).to receive(:validate_config!).and_return(false)
       expect(source).to receive(:create_server).never
+
+      source.send(:provision_proxy, site)
+    end
+
+    it 'silently ignores when the client class returns a NoServer object' do
+      expect(source).to receive(:validate_config!).and_return(true)
+      server = Sources::Fog::NoServer
+      expect(source).to receive(:create_server).and_return(server)
 
       source.send(:provision_proxy, site)
     end
