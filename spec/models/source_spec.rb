@@ -30,7 +30,7 @@ RSpec.describe Source, type: :model do
       member = @redis.lindex(source.persistent_errors.key, 0)
       expect(
         @redis.lindex(source.persistent_errors.key, 0)
-      ).to eq error_string
+      ).to match /#{error_string}/
     end
   end
 

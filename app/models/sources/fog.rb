@@ -25,6 +25,8 @@ module Sources
     #   num_proxies - How many proxies to create
     #   site - what site to add the proxies to after they're created
     def provision_proxies(num_proxies, site)
+      # The config is invalid. The child class logs the error
+      return unless validate_config!
       threads = num_proxies.times.map do
         Thread.new {provision_proxy(site)}
       end
@@ -91,9 +93,6 @@ module Sources
     # provision_proxy()
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
-      # The config is invalid. The child class logs the error
-      return unless validate_config!
-
       server = create_server
 
       # Return If we didn't get a server. The child class logs the error

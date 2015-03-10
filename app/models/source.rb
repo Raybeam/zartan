@@ -94,7 +94,8 @@ class Source < ActiveRecord::Base
   # If a systemic error occurs while provisioning proxies then it gets
   # reported here
   def add_error(error_string)
-    persistent_errors << error_string
+    time_str = Time.now.to_s
+    persistent_errors << "#{time_str}: #{error_string}"
   end
 
   private
