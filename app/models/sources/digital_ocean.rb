@@ -27,6 +27,14 @@ module Sources
 
     private
 
+    # server_is_proxy_type?(server)
+    # given a server, determine if it is running a proxy
+    def server_is_proxy_type?(server)
+      return server.image_id == self.image_id \
+        && server.region_id == self.region_id \
+        && server.flavor_id == self.flavor_id
+    end
+
     def connection
       @connection ||= ::Fog::Compute.new(
         :provider => 'DigitalOcean',

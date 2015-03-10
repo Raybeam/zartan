@@ -40,7 +40,26 @@ module Sources
       server.destroy
     end
 
+    # find_orphaned_servers!()
+    # Searches through the list of servers to find any servers that have been
+    # created, but fell through the cracks getting added to the database
+    def find_orphaned_servers!
+      connection.servers.each do |server|
+        if server_is_proxy_type?(server) \
+          && !Proxy.active.where(:host => server.public_ip_address).exists? \
+
+          save_server server
+        end
+      end
+    end
+
     protected
+
+    # server_is_proxy_type?(server)
+    # given a server, determine if it is running a proxy
+    def server_is_proxy_type?(server)
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
 
     # server_by_proxy(proxy)
     # Searches the service for the Fog server object that the proxy runs on
@@ -52,6 +71,12 @@ module Sources
     # Creates a Fog server.
     # This server object only needs to be initialized, not necessarily ready
     def create_server
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
+
+    # connection()
+    # Returns the connection object for the source
+    def connection
       raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
     end
 
@@ -77,7 +102,7 @@ module Sources
 
     # save_server()
     # Wrapper for Source.add_proxy
-    def save_server(server, site)
+    def save_server(server, site = NoSite)
       add_proxy(server.public_ip_address, config['proxy_port'], site)
     end
   end
