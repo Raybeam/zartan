@@ -34,7 +34,21 @@ class SourcesController < ApplicationController
   
   def update
     @source.assign_attributes(base_parameters)
-    @source.config = config_parameters
+    source_config = @source.config
+    config_patch = config_parameters
+    
+    # Update each config field only if either:
+    #   - It's not a password field
+    #   - It's a password field, and the user supplied a new value
+    @source.class.required_fields.each_pair do |name, type|
+      name = name.to_s
+      if type == :password
+        source_config[name] = config_patch[name] unless config_patch[name].empty?
+      else
+        source_config[name] = config_patch[name]
+      end
+    end
+    @source.config = source_config
     
     if @source.valid?
       @source.save!
