@@ -7,12 +7,15 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     it 'provisions multiple proxies' do
       expect(source).to receive(:validate_config!).and_return(true)
       expect(source).to receive(:provision_proxy).exactly(3).times
+      expect(source).to receive(:find_orphaned_servers!)
+
       source.provision_proxies(3, double)
     end
 
     it 'does nothing if the config is invalid' do
       expect(source).to receive(:validate_config!).and_return(false)
       expect(source).to receive(:provision_proxy).never
+
       source.provision_proxies(3, double)
     end
   end

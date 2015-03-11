@@ -38,7 +38,8 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       server = double(
         image_id: source.config['image_id'],
         flavor_id: source.config['flavor_id'],
-        region_id: source.config['region_id']
+        region_id: source.config['region_id'],
+        state: "active"
       )
 
       expect(source.send(:server_is_proxy_type?, server)).to be_truthy
@@ -48,7 +49,8 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       server = double(
         image_id: source.config['image_id'],
         flavor_id: source.config['flavor_id'],
-        region_id: nil
+        region_id: nil,
+        state: "active"
       )
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
@@ -57,7 +59,8 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       server = double(
         image_id: source.config['image_id'],
         flavor_id: nil,
-        region_id: source.config['region_id']
+        region_id: source.config['region_id'],
+        state: "active"
       )
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
@@ -66,8 +69,20 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       server = double(
         image_id: nil,
         flavor_id: source.config['flavor_id'],
-        region_id: source.config['region_id']
+        region_id: source.config['region_id'],
+        state: "active"
       )
+      expect(source.send(:server_is_proxy_type?, server)).to be_falsey
+    end
+
+    it 'identifies a server that is not active' do
+      server = double(
+        image_id: source.config['image_id'],
+        flavor_id: source.config['flavor_id'],
+        region_id: source.config['region_id'],
+        state: "new"
+      )
+
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
   end
