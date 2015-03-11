@@ -80,7 +80,12 @@ class Site < ActiveRecord::Base
     self.max_proxies - self.num_proxies
   end
 
+  def active_performance?(proxy)
+    !self.proxy_performances.active.where(proxy: proxy).empty?
+  end
+
   def proxy_succeeded!(proxy)
+    return unless active_performance? proxy
     proxy_pool_lock.lock do
       touch_proxy(proxy.id)
       proxy_successes.increment(proxy.id)
@@ -88,6 +93,7 @@ class Site < ActiveRecord::Base
   end
 
   def proxy_failed!(proxy)
+    return unless active_performance? proxy
     conf = Zartan::Config.new
     failure_threshold = conf['failure_threshold'].to_i
     num_failures = 0
