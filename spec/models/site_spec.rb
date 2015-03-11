@@ -55,11 +55,33 @@ RSpec.describe Site, type: :model do
       expect(site.num_proxies_needed).to eq old_proxies_needed-1
     end
 
+    context '#active_performance?' do
+      it 'should identify a disabled proxy/site relationship' do
+        proxy_performance.soft_delete
+        proxy_performance.save
+
+        expect(site.active_performance?(proxy)).to be_falsey
+      end
+
+      it 'should identify active proxy/site relationship' do
+        proxy_performance.save
+
+        expect(site.active_performance?(proxy)).to be_truthy
+      end        
+    end
 
     describe "recording proxy success" do
+      it "should ignore disabled proxies" do
+        expect(site).to receive(:active_performance?).and_return(false)
+        expect(site).to receive(:proxy_pool_lock).never
+
+        site.proxy_succeeded! proxy
+      end
+
       it "should record proxy successes" do
         value = 10
         @redis.zadd( site.proxy_successes.key, value, proxy.id )
+        expect(site).to receive(:active_performance?).and_return(true)
 
         site.proxy_succeeded! proxy
 
@@ -71,6 +93,7 @@ RSpec.describe Site, type: :model do
 
       it "should update the proxy's timestamp" do
         site.enable_proxy proxy
+        expect(site).to receive(:active_performance?).and_return(true)
 
         site.proxy_succeeded! proxy
 
@@ -82,10 +105,18 @@ RSpec.describe Site, type: :model do
 
 
     describe "recording proxy failure" do
+      it "should ignore disabled proxies" do
+        expect(site).to receive(:active_performance?).and_return(false)
+        expect(site).to receive(:proxy_pool_lock).never
+
+        site.proxy_failed! proxy
+      end
+
       it "should record proxy failures" do
         value = 10
         @redis.zadd( site.proxy_failures.key, value, proxy.id )
         Zartan::Config.new['failure_threshold'] = 12
+        expect(site).to receive(:active_performance?).and_return(true)
 
         site.proxy_failed! proxy
 
@@ -101,6 +132,7 @@ RSpec.describe Site, type: :model do
         @redis.zadd( site.proxy_failures.key, value, proxy.id )
         Zartan::Config.new['failure_threshold'] = 11
         expect(Site).to receive(:examine_health!).with(site.id, proxy.id)
+        expect(site).to receive(:active_performance?).and_return(true)
 
         site.proxy_failed! proxy
 
@@ -113,6 +145,7 @@ RSpec.describe Site, type: :model do
       it "should update the proxy's timestamp" do
         site.enable_proxy proxy
         Zartan::Config.new['failure_threshold'] = 10
+        expect(site).to receive(:active_performance?).and_return(true)
 
         site.proxy_failed! proxy
 
