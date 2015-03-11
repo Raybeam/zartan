@@ -19,12 +19,36 @@ set :linked_files, %w{
 
 namespace :deploy do
 
-  after :restart, :clear_cache do
-    on roles(:web), in: :groups, limit: 3, wait: 10 do
-      # Here we can do anything such as:
-      # within release_path do
-      #   execute :rake, 'cache:clear'
-      # end
+  desc "Generate the resque_pool config file"
+  after :finished, :build_pool do
+    on roles(:web) do
+      within release_path do
+        with rails_env: :production do
+          rake 'config:pool'
+        end
+      end
+    end
+  end
+  
+  desc "Set default values for global parameters in redis"
+  after :build_pool, :seed_config do
+    on roles(:web) do
+      within release_path do
+        with rails_env: :production do
+          rake 'config:seed'
+        end
+      end
+    end
+  end
+  
+  desc "Restart zartan-related monitored processes"
+  after :seed_config, :restart do
+    on roles(:web) do
+      if test("ps cax | grep monit")
+        execute :monit, *%w(-g zartan_app restart all)
+      else
+        info "monit is not running, so we can't safely restart Zartan"
+      end
     end
   end
 
