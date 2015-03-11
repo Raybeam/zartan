@@ -289,6 +289,7 @@ RSpec.describe Site, type: :model do
       expect(site).to receive(:generate_proxy_report).and_return(report)
       expect(site).to receive(:success_ratio_threshold).and_return(0.25)
       expect(site).to receive(:disable_proxy).never
+      expect(site).to receive(:large_enough_sample?).and_return(true)
 
       site.send(:disable_proxy_if_bad, proxy)
     end
@@ -298,8 +299,37 @@ RSpec.describe Site, type: :model do
       expect(site).to receive(:generate_proxy_report).and_return(report)
       expect(site).to receive(:success_ratio_threshold).and_return(0.25)
       expect(site).to receive(:disable_proxy)
+      expect(site).to receive(:large_enough_sample?).and_return(true)
 
       site.send(:disable_proxy_if_bad, proxy)
+    end
+
+    it "should not disable an proxy if we do not have enough samples" do
+      report = Site::PerformanceReport.new(10, 1)
+      expect(site).to receive(:generate_proxy_report).and_return(report)
+      expect(site).to receive(:success_ratio_threshold).never
+      expect(site).to receive(:disable_proxy).never
+      expect(site).to receive(:large_enough_sample?).and_return(false)
+
+      site.send(:disable_proxy_if_bad, proxy)
+    end
+  end
+
+  context '#large_enough_sample?' do
+    it 'determines we have a large enough sample' do
+      report = double('report', :total => 12)
+      expect(site).to receive(:failure_threshold).and_return(9)
+      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+
+      expect(site.send(:large_enough_sample?, report)).to be_truthy
+    end
+
+    it 'determines we do not have a large enough sample' do
+      report = double('report', :total => 11)
+      expect(site).to receive(:failure_threshold).and_return(9)
+      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+
+      expect(site.send(:large_enough_sample?, report)).to be_falsey
     end
   end
 
