@@ -62,5 +62,6 @@ group :development, :test do
   
   # deploying
   gem 'capistrano-rails'
+  gem 'capistrano-rvm'
 end
 
