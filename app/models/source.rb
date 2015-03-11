@@ -141,5 +141,11 @@ class Source < ActiveRecord::Base
       #   ex.: Sources::DigitalOcean.display_name == "Digital Ocean"
       self.name.underscore.split(%r[/]).last.split(%r[_]).collect(&:capitalize).join ' '
     end
+    
+    def valid_source_types
+      [
+        Sources::DigitalOcean
+      ]
+    end
   end
 end
