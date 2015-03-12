@@ -37,6 +37,7 @@ gem 'redis-objects'
 # Use resque to asyncronously run long-running jobs
 gem 'resque'
 gem 'resque-web', require: 'resque_web'
+gem 'resque-pool'
 
 # UI
 gem 'twitter-bootstrap-rails'
