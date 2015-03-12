@@ -6,6 +6,7 @@ working_directory "#{zartan_root}/current"
 
 listen "#{zartan_root}/shared/pids/.unicorn.sock"
 pid "#{zartan_root}/shared/pids/unicorn.pid"
+user "zartan", "zartan"
 
 stderr_path "#{zartan_root}/shared/log/unicorn.stderr.log"
 stdout_path "#{zartan_root}/shared/log/unicorn.stdout.log"
