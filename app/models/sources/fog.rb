@@ -1,6 +1,10 @@
 # Provides common methods for fog-based sources
 module Sources
   class Fog < Source
+
+    # How long to wait for a server to be ready
+    SERVER_READY_TIMEOUT = 60
+
     class << self
       # This should still be overwritten by child classes of Fog with
       # super.merge{...}
@@ -97,7 +101,8 @@ module Sources
 
       # Return If we didn't get a server. The child class logs the error
       return if server == NoServer
-      if server.wait_for { ready? }
+      # Only wait for SERVER_READY_TIMEOUT seconds
+      if server.wait_for(SERVER_READY_TIMEOUT) { ready? }
         save_server server, site
       else
         add_error("Timed out when creating #{server.name}")
