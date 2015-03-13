@@ -16,6 +16,8 @@ set :linked_files, %w{
   config/secrets.yml
 }
 
+set :log_level, :info
+
 
 namespace :deploy do
 
