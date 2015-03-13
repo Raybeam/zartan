@@ -1,0 +1,4 @@
+defaults:
+  failure_threshold: 5
+  success_ratio_threshold: 0.5
+  default_retry_interval: 30

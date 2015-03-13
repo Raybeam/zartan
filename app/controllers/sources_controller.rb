@@ -7,7 +7,7 @@ class SourcesController < ApplicationController
   def new
     @source = Source.new
     @source.config = {}
-    @source_types = valid_source_types
+    @source_types = Zartan::SourceType.all
   end
   
   def create
@@ -72,11 +72,5 @@ class SourcesController < ApplicationController
   
   def config_parameters
     params.require(:config).to_unsafe_h rescue {}
-  end
-  
-  def valid_source_types
-    [
-      Sources::DigitalOcean
-    ]
   end
 end

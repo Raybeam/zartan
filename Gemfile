@@ -3,8 +3,9 @@ source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.0'
-# Use sqlite3 as the database for Active Record
+# Use sqlite3, postgres as the databases for Active Record
 gem 'sqlite3'
+gem 'pg'
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 5.0'
 # Use Uglifier as compressor for JavaScript assets
@@ -36,6 +37,7 @@ gem 'redis-objects'
 # Use resque to asyncronously run long-running jobs
 gem 'resque'
 gem 'resque-web', require: 'resque_web'
+gem 'resque-pool'
 
 # UI
 gem 'twitter-bootstrap-rails'
@@ -59,5 +61,9 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'factory_girl'
   gem 'database_cleaner'
+  
+  # deploying
+  gem 'capistrano-rails'
+  gem 'capistrano-rvm'
 end
 
