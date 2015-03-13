@@ -7,7 +7,7 @@ class SourcesController < ApplicationController
   def new
     @source = Source.new
     @source.config = {}
-    @source_types = Source.valid_source_types
+    @source_types = Zartan::SourceType.all
   end
   
   def create

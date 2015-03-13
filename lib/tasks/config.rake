@@ -15,7 +15,7 @@ namespace :config do
   desc "Generate a resque_pool config file"
   task :pool => [:environment] do
     workers = { 'default' => 1 }
-    Source.valid_source_types.each do |type|
+    Zartan::SourceType.all.each do |type|
       workers[type.queue] = 1
     end
     
