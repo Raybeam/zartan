@@ -94,8 +94,6 @@ class Site < ActiveRecord::Base
 
   def proxy_failed!(proxy)
     return unless active_performance? proxy
-    conf = Zartan::Config.new
-    failure_threshold = conf['failure_threshold'].to_i
     num_failures = 0
     proxy_pool_lock.lock do
       touch_proxy(proxy.id)
@@ -156,9 +154,19 @@ class Site < ActiveRecord::Base
   #   proxy: The prxoy to get a report on
   def disable_proxy_if_bad(proxy)
     report = generate_proxy_report proxy
-    if report.times_succeeded.to_f / report.total < success_ratio_threshold
+    if large_enough_sample?(report) \
+      && report.times_succeeded.to_f / report.total < success_ratio_threshold
+
       self.disable_proxy proxy
     end
+  end
+
+  # large_enough_sample?()
+  # Determines if we have received enough successes + failures to be
+  # statistically signifigant
+  def large_enough_sample?(report)
+    mandatory_size = (failure_threshold / (1.0 - success_ratio_threshold)).to_i
+    return (report.total >= mandatory_size)
   end
 
   # request_more_proxies()
@@ -183,6 +191,10 @@ class Site < ActiveRecord::Base
     return @success_ratio_threshold if @success_ratio_threshold
     conf = Zartan::Config.new
     @success_ratio_threshold = conf['success_ratio_threshold'].to_f
+  end
+
+  def failure_threshold
+    @failure_threshold ||= Zartan::Config.new['failure_threshold'].to_i
   end
 
   def touch_proxy(proxy_id)
