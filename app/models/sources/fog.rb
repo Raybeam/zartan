@@ -31,6 +31,12 @@ module Sources
         Thread.new {provision_proxy(site)}
       end
       threads.each(&:join)
+      # If there are orphaned servers at this step then chances are one of the
+      # above threads terminated abnormally, perhaps because of a database
+      # locking issue, or maybe it took an excessive amount of time to
+      # provision a proxy in a previous call of this function. Find the
+      # orphaned servers and add them to the site
+      find_orphaned_servers! site
     end
 
     # decommission_proxy()
@@ -42,15 +48,18 @@ module Sources
       server.destroy
     end
 
-    # find_orphaned_servers!()
+    # find_orphaned_servers!(site)
     # Searches through the list of servers to find any servers that have been
     # created, but fell through the cracks getting added to the database
-    def find_orphaned_servers!
+    # Adds them to the site if provided
+    # Parameters:
+    #   site - What site to add the found servers to (if any)
+    def find_orphaned_servers!(*args)
       connection.servers.each do |server|
         if server_is_proxy_type?(server) \
           && !Proxy.active.where(:host => server.public_ip_address).exists? \
 
-          save_server server
+          save_server server, *args
         end
       end
     end
@@ -110,8 +119,10 @@ module Sources
 
     # save_server()
     # Wrapper for Source.add_proxy
-    def save_server(server, site = NoSite)
-      add_proxy(server.public_ip_address, config['proxy_port'], site)
+    # Parameters:
+    #   site - What site to add the found servers to (if any)
+    def save_server(server, *args)
+      add_proxy(server.public_ip_address, config['proxy_port'], *args)
     end
   end
 end
