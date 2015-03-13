@@ -42,6 +42,9 @@ class Site < ActiveRecord::Base
       threshold_ts = (Time.now - older_than.seconds).to_i
       if proxy_ts.nil?
         # We didn't find a proxy
+        # Enqueue the performance analyzer for the site so that we may have
+        # a proxy by the time the client requests a proxy again.
+        Resque.enqueue(Jobs::SitePerformanceAnalyzer, self.id)
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
