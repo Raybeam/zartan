@@ -45,7 +45,7 @@ namespace :deploy do
   after :seed_config, :restart do
     on roles(:web) do
       if test("ps cax | grep monit")
-        execute :monit, *%w(-g zartan_app restart all)
+        execute :sudo, *%w(monit -g zartan_app restart all)
       else
         info "monit is not running, so we can't safely restart Zartan"
       end
