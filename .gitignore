@@ -21,6 +21,7 @@
 /config/redis.yml
 /config/resque_pool.yml
 /config/secrets.yml
+/config/unicorn.rb
 
 # Ignore site-specific deploy configuration
 /config/deploy/*.rb

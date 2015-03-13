@@ -14,6 +14,7 @@ set :linked_files, %w{
   config/database.yml
   config/redis.yml
   config/secrets.yml
+  config/unicorn.rb
 }
 
 set :log_level, :info
