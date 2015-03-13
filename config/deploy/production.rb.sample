@@ -1,0 +1,14 @@
+# Define the server(s) that will be deployed to here
+server 'hostname_or_ip', user: 'zartan', roles: %w{app db web}
+
+# Options set here override anything listed in deploy.rb
+# For example:
+
+# Deploy from a branch other than master:
+# set :branch, 'another-branch'
+
+# Add an environment variable:
+# set :default_env, -> { fetch(:default_env).merge( var_name: 'value' ) }
+
+# Produce more detailed output:
+# set :log_level, :debug
