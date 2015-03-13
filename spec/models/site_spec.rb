@@ -243,6 +243,20 @@ RSpec.describe Site, type: :model do
         ).to eq(0)
       end
     end
+
+    context 'destruction' do
+      it 'destroys the redis constructs when site is destroyed' do
+        site.proxy_successes[proxy.id] = 0
+        site.proxy_failures[proxy.id] = 0
+        site.proxy_pool[proxy.id] = 0
+        expect(@redis.keys.length).to eq 3
+
+        site.destroy
+
+        expect(@redis.keys.length).to eq 0
+      end
+    end
+
   end
 
   describe 'PerformanceReport' do

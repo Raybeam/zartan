@@ -1,4 +1,6 @@
 class Site < ActiveRecord::Base
+  before_destroy :destroy_redis_objects
+
   has_many :proxy_performances, dependent: :destroy, inverse_of: :site
   has_many :proxies, through: :proxy_performances
 
@@ -142,6 +144,12 @@ class Site < ActiveRecord::Base
   end
 
   private
+
+  def destroy_redis_objects
+    proxy_pool.del
+    proxy_successes.del
+    proxy_failures.del
+  end
 
   def restore_or_create_performances(new_proxies)
     new_proxies.each do |proxy|
