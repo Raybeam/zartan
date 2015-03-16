@@ -158,11 +158,14 @@ RSpec.describe Site, type: :model do
 
     describe "proxy selection" do
       it "should return NoProxy when there are none" do
+        expect(site).to receive(:touch_proxy).never
+
         expect(site.select_proxy).to eq(Proxy::NoProxy)
       end
 
 
       it "should return a Proxy when there are any" do
+        expect(site).to receive(:touch_proxy)
         site.enable_proxy proxy
 
         expect(site.select_proxy).to be_instance_of(Proxy)
@@ -171,6 +174,7 @@ RSpec.describe Site, type: :model do
 
       it "should return the least recently used proxy when there are several" do
         proxy2 = create(:proxy, host: 'example.org')
+        expect(site).to receive(:touch_proxy)
 
         base_ts = Time.now.to_i
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
@@ -194,6 +198,7 @@ RSpec.describe Site, type: :model do
       it "should return NoColdProxy when there are no sufficiently old proxies" do
         base_ts = Time.now.to_i - 60
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
+        expect(site).to receive(:touch_proxy).never
 
         expect(site.select_proxy(120)).to be_instance_of(Proxy::NoColdProxy)
       end
@@ -202,6 +207,7 @@ RSpec.describe Site, type: :model do
       it "should set the NoColdProxy's timeout appropriately" do
         base_ts = Time.now.to_i - 60
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
+        expect(site).to receive(:touch_proxy).never
 
         expect(site.select_proxy(120).timeout).to be_between(50,60).inclusive
       end
@@ -210,6 +216,7 @@ RSpec.describe Site, type: :model do
       it "should return a proxy object when there are sufficiently old proxies" do
         base_ts = Time.now.to_i - 60
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
+        expect(site).to receive(:touch_proxy)
 
         expect(site.select_proxy(60)).to eq(proxy)
       end
