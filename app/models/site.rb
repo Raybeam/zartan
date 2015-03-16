@@ -37,7 +37,6 @@ class Site < ActiveRecord::Base
     proxy_pool_lock.lock do
       proxy_info = proxy_pool.range(0, 0, with_scores: true)
       proxy_id, proxy_ts = proxy_info.first
-      touch_proxy(proxy_id)
     end
 
     begin
@@ -52,6 +51,7 @@ class Site < ActiveRecord::Base
         # The proxy we found was too recently used.
         Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
       else
+        touch_proxy(proxy_id)
         Proxy.find(proxy_id)
       end
     rescue ActiveRecord::RecordNotFound => e
