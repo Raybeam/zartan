@@ -1,6 +1,10 @@
 # config valid only for current version of Capistrano
 lock '3.4.0'
 
+set :stages, %w(production staging)
+set :default_stage, "staging"
+require 'capistrano/ext/multistage'
+
 set :application, 'zartan'
 
 set :scm, :git
@@ -16,7 +20,7 @@ set :linked_files, %w{
   config/secrets.yml
   config/unicorn.rb
 }
-
+set :rails_env, 'production'
 set :log_level, :info
 
 
@@ -26,7 +30,7 @@ namespace :deploy do
   after :finished, :build_pool do
     on roles(:web) do
       within release_path do
-        with rails_env: :production do
+        with rails_env: fetch(:rails_env) do
           rake 'config:pool'
         end
       end
@@ -37,7 +41,7 @@ namespace :deploy do
   after :build_pool, :seed_config do
     on roles(:web) do
       within release_path do
-        with rails_env: :production do
+        with rails_env: fetch(:rails_env) do
           rake 'config:seed'
         end
       end
