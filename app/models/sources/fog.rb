@@ -31,15 +31,19 @@ module Sources
     def provision_proxies(num_proxies, site)
       # The config is invalid. The child class logs the error
       return unless validate_config!
+      # Search for servers that were created in a previous call to this method,
+      # but timed out
+      num_proxies -= find_orphaned_servers!(site)
+      # Don't double-count any servers that are still building
+      num_proxies -= num_servers_building
       threads = num_proxies.times.map do
         Thread.new {provision_proxy(site)}
       end
       threads.each(&:join)
       # If there are orphaned servers at this step then chances are one of the
       # above threads terminated abnormally, perhaps because of a database
-      # locking issue, or maybe it took an excessive amount of time to
-      # provision a proxy in a previous call of this function. Find the
-      # orphaned servers and add them to the site
+      # locking issue.
+      # Find the orphaned servers and add them to the site
       find_orphaned_servers! site
     end
 
@@ -59,12 +63,26 @@ module Sources
     # Parameters:
     #   site - What site to add the found servers to (if any)
     def find_orphaned_servers!(*args)
+      num_servers_found = 0
       connection.servers.each do |server|
         if server_is_proxy_type?(server) \
+          && server.ready? \
           && !Proxy.active.where(:host => server.public_ip_address).exists? \
 
           save_server server, *args
+          num_servers_found += 1
         end
+      end
+      num_servers_found
+    end
+
+    # num_servers_building()
+    # Searches through the list of servers to find any servers that have been
+    # created, but are not yet active.
+    def num_servers_building
+      connection.servers.inject(0) do |sum,server|
+        sum += 1 if server_is_proxy_type?(server) && !server.ready?
+        sum
       end
     end
 

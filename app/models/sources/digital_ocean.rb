@@ -33,8 +33,7 @@ module Sources
     def server_is_proxy_type?(server)
       return server.image_id == self.image_id \
         && server.region_id == self.region_id \
-        && server.flavor_id == self.flavor_id \
-        && server.state == "active"
+        && server.flavor_id == self.flavor_id
     end
 
     def connection
