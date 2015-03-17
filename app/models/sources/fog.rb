@@ -2,9 +2,6 @@
 module Sources
   class Fog < Source
 
-    # How long to wait for a server to be ready
-    SERVER_READY_TIMEOUT = 60
-
     class << self
       # This should still be overwritten by child classes of Fog with
       # super.merge{...}
@@ -121,6 +118,11 @@ module Sources
 
     private
 
+    # How long to wait for a server to be ready
+    def server_ready_timeout
+      Zartan::Config.new['server_ready_timeout'].to_i
+    end
+
     # provision_proxy()
     # Provision a single proxy on the cloud and add it to site when ready
     def provision_proxy(site)
@@ -128,8 +130,8 @@ module Sources
 
       # Return If we didn't get a server. The child class logs the error
       return if server == NoServer
-      # Only wait for SERVER_READY_TIMEOUT seconds
-      if server.wait_for(SERVER_READY_TIMEOUT) { ready? }
+      # Only wait for server_ready_timeout seconds
+      if server.wait_for(server_ready_timeout) { ready? }
         save_server server, site
       else
         add_error("Timed out when creating #{server.name}")

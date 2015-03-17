@@ -102,6 +102,18 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
   end
 
+  context '#server_ready_timeout' do
+    it 'uses the environment timeout' do
+      redis = Zartan::Redis.connect
+      redis.flushdb
+      Zartan::Config.new['server_ready_timeout'] = 40
+
+      expect(source.send(:server_ready_timeout)).to eq 40
+
+      redis.flushdb
+    end
+  end
+
   context '#provision_proxy' do
     it 'silently ignores when the client class returns a NoServer object' do
       server = Sources::Fog::NoServer
@@ -112,6 +124,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
     it 'logs an error when the server times out' do
       server = double(:wait_for => false, :name => 'foo')
+      expect(source).to receive(:server_ready_timeout)
       expect(source).to receive(:create_server).and_return(server)
       expect(source).to receive(:add_error)
 
@@ -120,6 +133,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
     it 'saves a properly created server' do
       server = double(:wait_for => double)
+      expect(source).to receive(:server_ready_timeout)
       expect(source).to receive(:create_server).and_return(server)
       expect(source).to receive(:save_server)
       expect(source).to receive(:add_error).never
