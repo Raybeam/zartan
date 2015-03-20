@@ -1,6 +1,7 @@
 require "resque_web"
 
 Rails.application.routes.draw do
+
   # API Routes
   # The constraint is necessary to ensure that :site_name can contain dots
   constraints site_name: %r{[a-z0-9_.-]+} do
@@ -20,7 +21,17 @@ Rails.application.routes.draw do
 
   get 'config',      to: 'config#show', as: :config
   post 'config/set', to: 'config#set', as: :config_set
+
+
+  # auth routes
+  get '/auth/failure' do
+    flash[:notice] = params[:message]
+    redirect '/'
+  end
+  get '/auth/:provider/callback', to: 'sessions#create'
+  get '/signout', to: 'sessions#destroy'
+  
   
   # Map / to the sites page
-  root to: 'sites#index'
+  root to: 'home#index'
 end

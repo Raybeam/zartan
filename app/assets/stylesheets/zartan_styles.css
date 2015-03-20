@@ -1,0 +1,73 @@
+@font-face {
+  font-family: 'icomoon';
+  src:url('fonts/icomoon.eot?wsmwbe');
+  src:url('fonts/icomoon.eot?#iefixwsmwbe') format('embedded-opentype'),
+    url('fonts/icomoon.woff?wsmwbe') format('woff'),
+    url('fonts/icomoon.ttf?wsmwbe') format('truetype'),
+    url('fonts/icomoon.svg?wsmwbe#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  font-family: 'icomoon';
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-mask:before {
+  content: "\e600";
+}
+
+#sign-in-box {
+  background: #f7f7f7;
+  box-shadow: 0 1px 2px rgba(34, 25, 25, 0.4); 
+  margin-top:50px;
+  margin-left:calc((100% - 570px)/2);
+  padding:20px 20px 40px;
+  width:500px; 
+}
+
+#sign-in-box h3 {
+  font-size:28px;
+  font-weight:300;
+  letter-spacing:.05em;
+  padding:0;
+  text-align: center
+}
+#sign-in-box h6{
+  font-size:14px;
+  font-weight:300;
+  letter-spacing:.025em;
+  padding:10px 0;
+  text-align: center
+}
+#sign-in-box a{
+  background:#3071A9;
+  border:0px;
+  border-radius:3px;
+  color:#fff;
+  display:block;
+  font-size:14px;
+  font-weight:300;
+  margin:15px auto 0;
+  padding:15px 0 13px;
+  text-align:center;
+  text-decoration:none;
+  text-transform:uppercase;
+  width:80%;
+}
+#sign-in-box a:hover {background:#235E8E;}
+#sign-in-box a:active {
+  background:#f5f5f5 !important;
+  box-shadow:inset 0 0 3px rgba(0,0,0,0.2);
+  color:#888;  
+}
