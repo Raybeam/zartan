@@ -11,7 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150320150720) do
+ActiveRecord::Schema.define(version: 20150320185058) do
+
+  create_table "api_keys", force: :cascade do |t|
+    t.string   "uuid"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "proxies", force: :cascade do |t|
     t.string   "host",       null: false
