@@ -1,10 +1,6 @@
 # config valid only for current version of Capistrano
 lock '3.4.0'
 
-set :stages, %w(production staging)
-set :default_stage, "staging"
-require 'capistrano/ext/multistage'
-
 set :application, 'zartan'
 
 set :scm, :git
@@ -19,8 +15,9 @@ set :linked_files, %w{
   config/redis.yml
   config/secrets.yml
   config/unicorn.rb
+  config/resque_schedule.yml
 }
-set :rails_env, 'production'
+set :rails_env, :production
 set :log_level, :info
 
 

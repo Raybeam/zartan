@@ -1,10 +1,5 @@
 
 namespace :config do
-  desc "Test hostname"
-  task :uname do
-    run "uname -a"
-  end
-
   desc "Set default config values where said values are undefined"
   task :seed => [:environment] do
     config = Zartan::Config.new
