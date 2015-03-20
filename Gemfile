@@ -71,5 +71,9 @@ group :development, :test do
   # deploying
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
+
+  gem 'quiet_assets'
+  gem 'awesome_print', require: "ap"
+
 end
 

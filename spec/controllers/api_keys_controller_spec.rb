@@ -44,29 +44,6 @@ RSpec.describe ApiKeysController, type: :controller do
     end
   end
 
-  describe "GET #show" do
-    it "assigns the requested api_key as @api_key" do
-      api_key = ApiKey.create! valid_attributes
-      get :show, {:id => api_key.to_param}, valid_session
-      expect(assigns(:api_key)).to eq(api_key)
-    end
-  end
-
-  describe "GET #new" do
-    it "assigns a new api_key as @api_key" do
-      get :new, {}, valid_session
-      expect(assigns(:api_key)).to be_a_new(ApiKey)
-    end
-  end
-
-  describe "GET #edit" do
-    it "assigns the requested api_key as @api_key" do
-      api_key = ApiKey.create! valid_attributes
-      get :edit, {:id => api_key.to_param}, valid_session
-      expect(assigns(:api_key)).to eq(api_key)
-    end
-  end
-
   describe "POST #create" do
     context "with valid params" do
       it "creates a new ApiKey" do
