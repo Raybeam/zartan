@@ -1,1 +1,1 @@
-json.extract! @api_key, :id, :created_at, :updated_at
+json.extract! @api_key, :id, :uuid, :created_at, :updated_at
