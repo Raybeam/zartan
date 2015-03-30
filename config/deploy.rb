@@ -15,6 +15,7 @@ set :linked_files, %w{
   config/redis.yml
   config/secrets.yml
   config/unicorn.rb
+  config/google_omniauth.yml
 }
 
 set :log_level, :info

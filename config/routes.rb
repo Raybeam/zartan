@@ -1,4 +1,5 @@
 require "resque_web"
+ResqueWeb::Engine.eager_load!
 
 Rails.application.routes.draw do
 
