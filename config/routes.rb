@@ -16,6 +16,7 @@ Rails.application.routes.draw do
     post 'clear_errors', on: :member
   end
   resources :proxies, only: %i(show)
+  resources :api_keys
   
   mount ResqueWeb::Engine => "/resque_web"
 
