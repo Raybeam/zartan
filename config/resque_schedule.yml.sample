@@ -1,4 +1,5 @@
 global_performance_analysis:
   cron: "*/15 * * * *"
-  class: "GlobalPerformanceAnalyzer"
+  queue: default
+  class: "Jobs::GlobalPerformanceAnalyzer"
   description: "Runs a performance analysis on all sites and their proxies"
