@@ -1,0 +1,13 @@
+development:
+  google_client_id: ""
+  google_client_secret: ""
+
+test:
+  google_client_id: ""
+  google_client_secret: ""
+
+# Do not keep production secrets in the repository,
+# instead read values from the config on server.
+production:
+  google_client_id: ""
+  google_client_secret: ""

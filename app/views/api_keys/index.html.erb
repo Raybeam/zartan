@@ -1,0 +1,23 @@
+<div class="page-header">
+<%= form_for(@api_key) do |f| %>
+  <button type="submit" class='btn btn-primary pull-right'>New API Key</button>
+<% end %>
+  <h1>API Keys</h1>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Key</th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @api_keys.each do |api_key| %>
+      <tr>
+        <td><%= api_key.uuid %></td>
+        <td><%= link_to 'Destroy', api_key, method: :delete, data: { confirm: 'Are you sure?' }, :class => 'btn btn-default btn-xs' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

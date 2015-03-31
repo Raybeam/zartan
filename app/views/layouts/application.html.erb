@@ -11,28 +11,25 @@
     <%= javascript_include_tag "application" %>
   </head>
   <body>
-
-    <%= nav_bar brand: 'Zartan', static: :top, responsive: true do %>
-      <%= menu_group do %>
-        <%= menu_item "Sites", sites_path %>
-        <%= menu_item "Sources", sources_path %>
-        <%= menu_item "Settings", config_path %>
+    <% if current_user %>
+      <%= nav_bar brand: 'Zartan', static: :top, responsive: true do %>
+        <%= menu_group do %>
+          <%= menu_item "Sites", sites_path %>
+          <%= menu_item "Sources", sources_path %>
+          <%= menu_item "Settings", config_path %>
+          <%= menu_item "API Keys", api_keys_path %>
+          <%= menu_item "Sign out", signout_path %>
+        <% end %>
       <% end %>
     <% end %>
-
     <div class="container">
       <div class="row">
         <div class="col-md-12">
+          <% unless current_user %><br/><% end %>
           <%= bootstrap_flash %>
           <%= yield %>
         </div>
       </div><!--/row-->
-
-      <footer>
-        <p>&copy; Raybeam 2015</p>
-      </footer>
-
     </div> <!-- /container -->
-
   </body>
 </html>

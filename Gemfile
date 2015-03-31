@@ -48,6 +48,12 @@ gem 'fog'
 
 gem 'andand'
 
+# Authentication
+gem 'omniauth-google-oauth2'
+
+# API authorization
+gem 'uuidtools'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'
@@ -66,5 +72,9 @@ group :development, :test do
   # deploying
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
+
+  gem 'quiet_assets'
+  gem 'awesome_print', require: "ap"
+
 end
 
