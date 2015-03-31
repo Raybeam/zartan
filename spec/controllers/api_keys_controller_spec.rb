@@ -23,13 +23,9 @@ RSpec.describe ApiKeysController, type: :controller do
   # This should return the minimal set of attributes required to create a valid
   # ApiKey. As you add validations to ApiKey, be sure to
   # adjust the attributes here as well.
-  let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
-  }
+  let(:valid_attributes) {Hash.new}
 
-  let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
-  }
+  let(:invalid_attributes) {Hash.new}
 
   # This should return the minimal set of values that should be in the session
   # in order to pass any filters (e.g. authentication) defined in
@@ -38,8 +34,8 @@ RSpec.describe ApiKeysController, type: :controller do
 
   describe "GET #index" do
     it "assigns all api_keys as @api_keys" do
-      api_key = ApiKey.create! valid_attributes
-      get :index, {}, valid_session
+      api_key = create(:api_key)
+      get :index
       expect(assigns(:api_keys)).to eq([api_key])
     end
   end
