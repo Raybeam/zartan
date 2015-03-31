@@ -139,7 +139,7 @@ class Site < ActiveRecord::Base
   # Parameters:
   #   proxy: The prxoy whose performance is being analyzed
   def proxy_performance_analysis!(proxy)
-    disable_proxy_if_bad proxy
+    disable_proxy_if_bad proxy, trust_sample_size: true
     request_more_proxies
   end
 
@@ -163,9 +163,9 @@ class Site < ActiveRecord::Base
   # proxies get pruned.
   # Parameters:
   #   proxy: The prxoy to get a report on
-  def disable_proxy_if_bad(proxy)
+  def disable_proxy_if_bad(proxy, trust_sample_size: false)
     report = generate_proxy_report proxy
-    if large_enough_sample?(report) \
+    if (trust_sample_size || large_enough_sample?(report)) \
       && report.times_succeeded.to_f / report.total < success_ratio_threshold
 
       self.disable_proxy proxy

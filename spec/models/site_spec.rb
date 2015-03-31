@@ -334,6 +334,16 @@ RSpec.describe Site, type: :model do
 
       site.send(:disable_proxy_if_bad, proxy)
     end
+
+    it "should ignore sample size when requested" do
+      report = Site::PerformanceReport.new(10, 100)
+      expect(site).to receive(:generate_proxy_report).and_return(report)
+      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+      expect(site).to receive(:disable_proxy)
+      expect(site).to receive(:large_enough_sample?).never
+
+      site.send(:disable_proxy_if_bad, proxy, {trust_sample_size: true})
+    end
   end
 
   context '#large_enough_sample?' do
