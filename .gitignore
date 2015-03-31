@@ -22,6 +22,7 @@
 /config/resque_pool.yml
 /config/secrets.yml
 /config/google_omniauth.yml
+/config/resque_schedule.yml
 /config/unicorn.rb
 
 # Ignore site-specific deploy configuration

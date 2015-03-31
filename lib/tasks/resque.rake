@@ -2,6 +2,8 @@ require 'resque/tasks'
 require 'resque/pool/tasks'
 require 'resque/scheduler/tasks'
 
+require 'resque-scheduler'
+
 namespace :resque do
   task :setup => :environment
 
@@ -17,8 +19,6 @@ namespace :resque do
   end
 
   task :setup_schedule => :setup do
-    require 'resque-scheduler'
-
     Resque.schedule = YAML.load_file(Rails.root.join('config/resque_schedule.yml'))
   end
 
