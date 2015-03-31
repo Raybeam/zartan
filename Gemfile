@@ -38,6 +38,7 @@ gem 'redis-objects'
 gem 'resque'
 gem 'resque-web', require: 'resque_web'
 gem 'resque-pool'
+gem 'resque-scheduler'
 
 # UI
 gem 'twitter-bootstrap-rails'

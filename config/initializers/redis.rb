@@ -1,3 +1,6 @@
+require 'resque-scheduler'
+require 'resque/scheduler/server'
+
 REDIS_CONFIG = YAML.load_file(Rails.root.join('config/redis.yml'))[Rails.env]
 
 connection = Zartan::Redis.connect
