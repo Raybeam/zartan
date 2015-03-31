@@ -16,7 +16,7 @@ module Api
           render json: Responses::success(result)
         end
       else
-        render json: 'Unrecognized API Key'        
+        render json: Responses::failure('Unrecognized API Key')
       end
     end
     
@@ -35,7 +35,7 @@ module Api
         end
         render json: Responses::success
       else
-        render json: 'Unrecognized API Key'
+        render json: Responses::failure('Unrecognized API Key')
       end
     end
     
