@@ -4,7 +4,6 @@ class ApiKeysController < ApplicationController
   # GET /api_keys
   # GET /api_keys.json
   def index
-    byebug
     @api_keys = ApiKey.all
   end
 
