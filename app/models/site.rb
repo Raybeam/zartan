@@ -17,6 +17,7 @@ class Site < ActiveRecord::Base
       @total ||= times_succeeded + times_failed
     end
   end
+  ProxyInfo = Struct.new(:proxy_id, :proxy_ts)
 
   # select_proxy()
   # select_proxy(older_than)
@@ -63,16 +64,6 @@ class Site < ActiveRecord::Base
     proxy_pool_lock.lock do
       proxy_pool[proxy.id] = 0
     end
-  end
-
-  def disable_proxy(proxy)
-    proxy_pool_lock.lock do
-      proxy_pool.delete(proxy.id)
-      proxy_successes.delete(proxy.id)
-      proxy_failures.delete(proxy.id)
-    end
-    disable_proxy_in_database(proxy)
-    proxy.queue_decommission
   end
 
   # The number of proxies currently used by the site
@@ -125,10 +116,25 @@ class Site < ActiveRecord::Base
   # Parameters:
   #   None
   def global_performance_analysis!
+    cached_latest_scrape_time = latest_proxy_info.proxy_ts
     self.proxy_performances.active.each do |proxy_performance|
       disable_proxy_if_bad proxy_performance.proxy
     end
-    request_more_proxies
+    # We only want more proxies if the site has used proxies recently
+    if !cached_latest_scrape_time.nil? \
+      && cached_latest_scrape_time > (Time.now - proxy_age_timeout.seconds).to_i
+
+      request_more_proxies
+    end
+  end
+
+  def latest_proxy_info
+    proxy_id, proxy_ts = nil, nil
+    proxy_pool_lock.lock do
+      proxy_info = proxy_pool.revrange(0, 0, with_scores: true)
+      proxy_id, proxy_ts = proxy_info.first
+    end
+    ProxyInfo.new(proxy_id, proxy_ts)
   end
 
   # proxy_performance_analysis!()
@@ -143,7 +149,40 @@ class Site < ActiveRecord::Base
     request_more_proxies
   end
 
+  # request_more_proxies()
+  # Requests more proxies if the number of proxies currently in the site's
+  # pool has gone below the minimum.
+  # Parameters:
+  #   None
+  def request_more_proxies
+    if self.num_proxies < self.min_proxies
+      ProxyRequestor.new(site: self).run
+    end
+  end
+
   private
+
+  def proxy_removal_wrapper(proxy, &block)
+    proxy_pool_lock.lock do
+      proxy_pool.delete(proxy.id)
+      proxy_successes.delete(proxy.id)
+      proxy_failures.delete(proxy.id)
+    end
+    yield(proxy)
+    proxy.queue_decommission
+  end
+
+  def forget_proxy(proxy)
+    proxy_removal_wrapper(proxy) do
+      proxy_performance(proxy).destroy
+    end
+  end
+
+  def disable_proxy(proxy)
+    proxy_removal_wrapper(proxy) do
+      proxy_performance(proxy).soft_delete
+    end
+  end
 
   def destroy_redis_objects
     proxy_pool.del
@@ -164,12 +203,21 @@ class Site < ActiveRecord::Base
   # Parameters:
   #   proxy: The prxoy to get a report on
   def disable_proxy_if_bad(proxy, trust_sample_size: false)
-    report = generate_proxy_report proxy
-    if (trust_sample_size || large_enough_sample?(report)) \
-      && report.times_succeeded.to_f / report.total < success_ratio_threshold
+    # If the site hasn't used this proxy recently enough then forget about it.
+    if proxy_too_old?(proxy)
+      self.forget_proxy(proxy)
+    else
+      report = generate_proxy_report proxy
+      if (trust_sample_size || large_enough_sample?(report)) \
+        && report.times_succeeded.to_f / report.total < success_ratio_threshold
 
-      self.disable_proxy proxy
+        self.disable_proxy proxy
+      end
     end
+  end
+
+  def proxy_too_old?(proxy)
+    return proxy_pool[proxy.id] < Time.now - proxy_age_timeout
   end
 
   # large_enough_sample?()
@@ -178,17 +226,6 @@ class Site < ActiveRecord::Base
   def large_enough_sample?(report)
     mandatory_size = (failure_threshold / (1.0 - success_ratio_threshold)).to_i
     return (report.total >= mandatory_size)
-  end
-
-  # request_more_proxies()
-  # Requests more proxies if the number of proxies currently in the site's
-  # pool has gone below the minimum.
-  # Parameters:
-  #   None
-  def request_more_proxies
-    if self.num_proxies < self.min_proxies
-      ProxyRequestor.new(site: self).run
-    end
   end
 
   # success_ratio_threshold()
@@ -204,6 +241,10 @@ class Site < ActiveRecord::Base
     @success_ratio_threshold = conf['success_ratio_threshold'].to_f
   end
 
+  def proxy_age_timeout
+    @proxy_age_timeout ||= Zartan::Config.new['proxy_age_timeout_seconds'].to_i
+  end
+
   def failure_threshold
     @failure_threshold ||= Zartan::Config.new['failure_threshold'].to_i
   end
@@ -212,16 +253,8 @@ class Site < ActiveRecord::Base
     proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
 
-  # disable_proxy_in_database(proxy)
-  # dissassociates the proxy from the site in the database, but keeps the
-  # ProxyPerformance object available for performance queries
-  # Parameters:
-  #   proxy - The proxy to dissassociate from the site
-  # Returns:
-  #   - Float: the minimum allowed success ratio for proxies to be considered
-  #     good
-  def disable_proxy_in_database(proxy)
-    self.proxy_performances.where(proxy: proxy).first.soft_delete
+  def proxy_performance(proxy)
+    self.proxy_performances.active.where(proxy: proxy).first
   end
 
   # generate_proxy_report(proxy)

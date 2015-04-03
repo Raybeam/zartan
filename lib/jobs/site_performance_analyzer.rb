@@ -7,7 +7,7 @@ module Jobs
 
       def perform(site_id)
         site = Site.find site_id
-        site.global_performance_analysis!
+        site.request_more_proxies
       end
     end
   end

@@ -32,15 +32,14 @@ RSpec.describe Site, type: :model do
       end
 
 
-      it "should remove all traces of disabled proxies" do
+      it "should remove all traces in redis of disabled proxies" do
         Zartan::Config.new['failure_threshold'] = 100
         site.enable_proxy proxy
         site.proxy_succeeded! proxy
         site.proxy_failed! proxy
-        expect(site).to receive(:disable_proxy_in_database)
         expect(proxy).to receive(:queue_decommission)
 
-        site.disable_proxy proxy
+        site.send(:proxy_removal_wrapper, proxy) {}
 
         expect(@redis.zscore( site.proxy_pool.key, proxy.id )).to be_nil
         expect(@redis.zscore( site.proxy_successes.key, proxy.id )).to be_nil
@@ -53,6 +52,26 @@ RSpec.describe Site, type: :model do
       site.enable_proxy proxy
 
       expect(site.num_proxies_needed).to eq old_proxies_needed-1
+    end
+
+    context '#latest_proxy_info' do
+      it 'retrieves the latest proxy info' do
+        now = Time.now.to_i
+        site.proxy_pool[1] = now
+        site.proxy_pool[2] = now - 30.seconds
+
+        proxy_info = site.latest_proxy_info
+
+        expect(proxy_info.proxy_id).to eq "1"
+        expect(proxy_info.proxy_ts).to eq now
+      end
+
+      it 'has nil values if there is no proxy info' do
+        proxy_info = site.latest_proxy_info
+
+        expect(proxy_info.proxy_id).to be_nil
+        expect(proxy_info.proxy_ts).to be_nil
+      end
     end
 
     context '#active_performance?' do
