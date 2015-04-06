@@ -128,15 +128,6 @@ class Site < ActiveRecord::Base
     end
   end
 
-  def latest_proxy_info
-    proxy_id, proxy_ts = nil, nil
-    proxy_pool_lock.lock do
-      proxy_info = proxy_pool.revrange(0, 0, with_scores: true)
-      proxy_id, proxy_ts = proxy_info.first
-    end
-    ProxyInfo.new(proxy_id, proxy_ts)
-  end
-
   # proxy_performance_analysis!()
   # Run a performance analysis on a single proxy associated with the site.
   # Consistently successful proxies stay in service while unsuccessful
@@ -161,6 +152,15 @@ class Site < ActiveRecord::Base
   end
 
   private
+
+  def latest_proxy_info
+    proxy_id, proxy_ts = nil, nil
+    proxy_pool_lock.lock do
+      proxy_info = proxy_pool.revrange(0, 0, with_scores: true)
+      proxy_id, proxy_ts = proxy_info.first
+    end
+    ProxyInfo.new(proxy_id, proxy_ts)
+  end
 
   def proxy_removal_wrapper(proxy, &block)
     proxy_pool_lock.lock do
@@ -211,7 +211,7 @@ class Site < ActiveRecord::Base
       if (trust_sample_size || large_enough_sample?(report)) \
         && report.times_succeeded.to_f / report.total < success_ratio_threshold
 
-        self.disable_proxy proxy
+        disable_proxy proxy
       end
     end
   end
