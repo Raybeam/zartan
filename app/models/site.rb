@@ -205,7 +205,7 @@ class Site < ActiveRecord::Base
   def disable_proxy_if_bad(proxy, trust_sample_size: false)
     # If the site hasn't used this proxy recently enough then forget about it.
     if proxy_too_old?(proxy)
-      self.forget_proxy(proxy)
+      forget_proxy(proxy)
     else
       report = generate_proxy_report proxy
       if (trust_sample_size || large_enough_sample?(report)) \
@@ -217,7 +217,7 @@ class Site < ActiveRecord::Base
   end
 
   def proxy_too_old?(proxy)
-    return proxy_pool[proxy.id] < Time.now - proxy_age_timeout
+    return proxy_pool[proxy.id].to_i < Time.now.to_i - proxy_age_timeout
   end
 
   # large_enough_sample?()
