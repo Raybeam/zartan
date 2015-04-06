@@ -8,19 +8,7 @@ RSpec.describe Site, type: :model do
     create(:proxy_performance, :proxy => proxy, :site => site)
   end
 
-  describe "redis interactions" do
-    before :all do
-      @redis = Zartan::Redis.connect
-    end
-
-    before :each do
-      @redis.flushdb
-    end
-
-    after :all do
-      @redis.flushdb
-    end
-
+  describe "redis interactions", redis:true do
 
     describe "adding and removing proxies" do
       it "should add proxies to the proxy pool" do
@@ -32,15 +20,14 @@ RSpec.describe Site, type: :model do
       end
 
 
-      it "should remove all traces of disabled proxies" do
+      it "should remove all traces in redis of disabled proxies" do
         Zartan::Config.new['failure_threshold'] = 100
         site.enable_proxy proxy
         site.proxy_succeeded! proxy
         site.proxy_failed! proxy
-        expect(site).to receive(:disable_proxy_in_database)
         expect(proxy).to receive(:queue_decommission)
 
-        site.disable_proxy proxy
+        site.send(:proxy_removal_wrapper, proxy) {}
 
         expect(@redis.zscore( site.proxy_pool.key, proxy.id )).to be_nil
         expect(@redis.zscore( site.proxy_successes.key, proxy.id )).to be_nil
@@ -53,6 +40,26 @@ RSpec.describe Site, type: :model do
       site.enable_proxy proxy
 
       expect(site.num_proxies_needed).to eq old_proxies_needed-1
+    end
+
+    context '#latest_proxy_info' do
+      it 'retrieves the latest proxy info' do
+        now = Time.now.to_i
+        site.proxy_pool[1] = now
+        site.proxy_pool[2] = now - 30.seconds
+
+        proxy_info = site.send(:latest_proxy_info)
+
+        expect(proxy_info.proxy_id).to eq "1"
+        expect(proxy_info.proxy_ts).to eq now
+      end
+
+      it 'has nil values if there is no proxy info' do
+        proxy_info = site.send(:latest_proxy_info)
+
+        expect(proxy_info.proxy_id).to be_nil
+        expect(proxy_info.proxy_ts).to be_nil
+      end
     end
 
     context '#active_performance?' do
@@ -273,24 +280,43 @@ RSpec.describe Site, type: :model do
     end
   end
 
-  describe 'performance analysis' do
+  context '#global_performance_analysis!' do
     before :each do
-      expect(site).to receive(:request_more_proxies)
+      @proxy_info = double('proxy_info')
+      expect(site).to receive(:latest_proxy_info).and_return(@proxy_info)
     end
 
-    it "should run a performance analysis on all proxies" do
-      2.times.each do |i|
-        proxy = create(:proxy, :port => i)
-        proxy.sites << site
-        proxy.save
-      end
-      expect(site).to receive(:disable_proxy_if_bad).twice
+    it "disables bad proxies and requests more" do
+      proxy_performance.save
+      expect(site).to receive(:disable_proxy_if_bad)
+      expect(@proxy_info).to receive(:proxy_ts).and_return(Time.now.to_i)
+      expect(site).to receive(:proxy_age_timeout).and_return(60)
+      expect(site).to receive(:request_more_proxies)
 
       site.global_performance_analysis!
     end
 
+    it "doesn't request more proxies if there were initially no proxies" do
+      expect(@proxy_info).to receive(:proxy_ts).and_return(nil)
+      expect(site).to receive(:request_more_proxies).never
+
+      site.global_performance_analysis!
+    end
+
+    it "doesn't request more proxies if there is no recent scrape" do
+      expect(@proxy_info).to receive(:proxy_ts).and_return(Time.now.to_i - 60)
+      expect(site).to receive(:proxy_age_timeout).and_return(30)
+      expect(site).to receive(:request_more_proxies).never
+
+      site.global_performance_analysis!
+    end
+  end
+
+  context '#proxy_performance_analysis!' do
+
     it "should run a performance analysis on a single proxy" do
       expect(site).to receive(:disable_proxy_if_bad)
+      expect(site).to receive(:request_more_proxies)
       site.proxy_performance_analysis! proxy
     end
   end
@@ -305,44 +331,59 @@ RSpec.describe Site, type: :model do
 
   context '#disable_proxy_if_bad' do
 
-    it "should not disable a successful proxy" do
-      report = Site::PerformanceReport.new(10, 1)
-      expect(site).to receive(:generate_proxy_report).and_return(report)
-      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
-      expect(site).to receive(:disable_proxy).never
-      expect(site).to receive(:large_enough_sample?).and_return(true)
+    context "proxy is not too old" do
+      before(:each) do
+        expect(site).to receive(:proxy_too_old?).and_return(false)
+      end
 
-      site.send(:disable_proxy_if_bad, proxy)
+      it "should not disable a successful proxy" do
+        report = Site::PerformanceReport.new(10, 1)
+        expect(site).to receive(:generate_proxy_report).and_return(report)
+        expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+        expect(site).to receive(:disable_proxy).never
+        expect(site).to receive(:large_enough_sample?).and_return(true)
+
+        site.send(:disable_proxy_if_bad, proxy)
+      end
+
+      it "should disable an unsuccessful proxy" do
+        report = Site::PerformanceReport.new(10, 100)
+        expect(site).to receive(:generate_proxy_report).and_return(report)
+        expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+        expect(site).to receive(:disable_proxy)
+        expect(site).to receive(:large_enough_sample?).and_return(true)
+
+        site.send(:disable_proxy_if_bad, proxy)
+      end
+
+      it "should not disable an proxy if we do not have enough samples" do
+        report = Site::PerformanceReport.new(10, 1)
+        expect(site).to receive(:generate_proxy_report).and_return(report)
+        expect(site).to receive(:success_ratio_threshold).never
+        expect(site).to receive(:disable_proxy).never
+        expect(site).to receive(:large_enough_sample?).and_return(false)
+
+        site.send(:disable_proxy_if_bad, proxy)
+      end
+
+      it "should ignore sample size when requested" do
+        report = Site::PerformanceReport.new(10, 100)
+        expect(site).to receive(:generate_proxy_report).and_return(report)
+        expect(site).to receive(:success_ratio_threshold).and_return(0.25)
+        expect(site).to receive(:disable_proxy)
+        expect(site).to receive(:large_enough_sample?).never
+
+        site.send(:disable_proxy_if_bad, proxy, {trust_sample_size: true})
+      end
     end
 
-    it "should disable an unsuccessful proxy" do
-      report = Site::PerformanceReport.new(10, 100)
-      expect(site).to receive(:generate_proxy_report).and_return(report)
-      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
-      expect(site).to receive(:disable_proxy)
-      expect(site).to receive(:large_enough_sample?).and_return(true)
+    context "Proxy is too old" do
+      before(:each) do
+        expect(site).to receive(:proxy_too_old?).and_return(true)
+        expect(site).to receive(:forget_proxy)
 
-      site.send(:disable_proxy_if_bad, proxy)
-    end
-
-    it "should not disable an proxy if we do not have enough samples" do
-      report = Site::PerformanceReport.new(10, 1)
-      expect(site).to receive(:generate_proxy_report).and_return(report)
-      expect(site).to receive(:success_ratio_threshold).never
-      expect(site).to receive(:disable_proxy).never
-      expect(site).to receive(:large_enough_sample?).and_return(false)
-
-      site.send(:disable_proxy_if_bad, proxy)
-    end
-
-    it "should ignore sample size when requested" do
-      report = Site::PerformanceReport.new(10, 100)
-      expect(site).to receive(:generate_proxy_report).and_return(report)
-      expect(site).to receive(:success_ratio_threshold).and_return(0.25)
-      expect(site).to receive(:disable_proxy)
-      expect(site).to receive(:large_enough_sample?).never
-
-      site.send(:disable_proxy_if_bad, proxy, {trust_sample_size: true})
+        site.send(:disable_proxy_if_bad, proxy)
+      end
     end
   end
 
@@ -370,7 +411,7 @@ RSpec.describe Site, type: :model do
       expect(site).to receive(:min_proxies).and_return(5)
       expect(ProxyRequestor).to receive(:new).never
 
-      site.send(:request_more_proxies)
+      site.request_more_proxies
     end
 
     it "requests more proxies if we need more" do
@@ -379,7 +420,7 @@ RSpec.describe Site, type: :model do
       requestor = double('requestor', :run => double)
       expect(ProxyRequestor).to receive(:new).and_return(requestor)
 
-      site.send(:request_more_proxies)
+      site.request_more_proxies
     end
   end
 
@@ -387,17 +428,6 @@ RSpec.describe Site, type: :model do
     it 'retrieves the success ratio threshold config as a float' do
       Zartan::Config.new[:success_ratio_threshold] = 0.25
       expect(site.send(:success_ratio_threshold)).to eq 0.25
-    end
-  end
-
-  context '#disable_proxy_in_database' do
-    it 'soft deletes the site/proxy relationship' do
-      proxy_performance.save
-
-      site.send(:disable_proxy_in_database, proxy)
-
-      proxy_performance.reload
-      expect(proxy_performance.active?).to be_falsey
     end
   end
 

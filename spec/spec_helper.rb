@@ -42,6 +42,18 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
+  config.before :all, redis:true do
+    @redis ||= Zartan::Redis.connect
+  end
+
+  config.before :each, redis:true do
+    @redis.flushdb
+  end
+
+  config.after :all, redis:true do
+    @redis.flushdb
+  end
+
 # The settings below are suggested to provide a good initial experience
 # with RSpec, but feel free to customize to your heart's content.
 =begin
