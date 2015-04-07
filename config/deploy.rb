@@ -17,6 +17,7 @@ set :linked_files, %w{
   config/unicorn.rb
   config/google_omniauth.yml
   config/resque_schedule.yml
+  config/default_settings.yml
 }
 set :rails_env, :production
 set :log_level, :info
