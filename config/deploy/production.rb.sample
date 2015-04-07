@@ -1,5 +1,5 @@
 # Define the server(s) that will be deployed to here
-server 'hostname_or_ip', user: 'zartan', roles: %w{app db web}
+server 'hostname', user: 'zartan', roles: %w{app db web}
 
 # Options set here override anything listed in deploy.rb
 # For example:
@@ -7,8 +7,22 @@ server 'hostname_or_ip', user: 'zartan', roles: %w{app db web}
 # Deploy from a branch other than master:
 # set :branch, 'another-branch'
 
-# Add an environment variable:
-# set :default_env, -> { fetch(:default_env).merge( var_name: 'value' ) }
+set :repo_url, 'git@YOUR_GIT_SSH_URL.git'
+
+# Override any environment variables
+set :default_env, {
+  ## Uncomment below if your environment has rvm installed on the system level
+  #rvm_bin_path: '/usr/local/rvm'
+}
+
+# Your environment may use a different gemset.  Specify that here.
+set :rvm_ruby_version, '2.2.0@zartan'
+
+# Setting the stage is necessary if this file is named anything other than
+# production.rb.  You can, for example create staging.rb so you can run
+# `cap staging deploy`.  This lets you test any changes to your deploy procedure
+# without affecting production.
+set :stage, :production
 
 # Produce more detailed output:
 # set :log_level, :debug
