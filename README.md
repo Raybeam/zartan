@@ -19,7 +19,7 @@ pools of proxies for each website you scrape, allowing you to use the same
 proxies to scrape multiple sites, even if specific proxies have been banned
 on specific sites.
 
-It is expected that you run Zartan on your own server.  This is not a web
+It is expected that you run Zartan on your own server.  This is not a public web
 service.
 
 # API Usage
@@ -37,14 +37,16 @@ GET http://HOST_NAME/v1/SITE_NAME
 ```
 Parameters
 - older_than (optional)
-  - How many seconds a proxy must remain idle before being used again
+  - Minimum time (in seconds) since the selected proxy's last use
 
 ### On success
+
+An example:
 ```
 {
   "result":"success",
   "payload":{
-    "id":11,
+    "id":PROXY_ID,
     "host":"IP_ADDRESS",
     "port":PORT_NUMBER,
     "source_id":2,
@@ -63,28 +65,22 @@ This either happens when there are no proxies newer than the optional older_than
 parameter, or there are no proxies available at all.  In both cases, the
 client is asked to wait `interval` seconds before they make another request.
 
-## Report proxy success
+## Report proxy success/failure
 ```
-PUT http://HOST_NAME/v1/SITE_NAME/11/succeeded
+POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/succeeded
+POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/failed
 ```
-Informs zartan that the proxy with id #11 has successfully scraped a page.
-In the short term, this resets the proxy's idle time.  In the long term,
-this is used to evaluate whether the proxy is still able to scrape the
-specified site
-
-## Report proxy failure
-```
-PUT http://HOST_NAME/v1/SITE_NAME/11/failed
-```
-Informs zartan that the proxy with id #11 failed to scrape a page.
-In the short term, this resets the proxy's idle time.  In the long term,
-this is used to evaluate whether the proxy is still able to scrape the
+The GET request gives a PROXY_ID for use with these POST URIs.  These
+inform zartan that the proxy with whose that ID has either successfully scraped
+a page or failed to scrape a page.
+In the short term these reset the proxy's idle time.  In the long term
+these reports are used to evaluate whether the proxy is still able to scrape the
 specified site.
 
 # Admin panel
 The admin panel uses google OAUTH to authenticate.  If google manages your
 email then authentication simply requires whitelisting your email domain in
-config/default_settings.yml.
+config/google_omniauth.yml.
 
 ## Sites
 A Zartan `Site` object represents a website you're targeting with your
@@ -146,7 +142,7 @@ show up on the page for that site shortly after the first proxy is
 requested from that source.
 
 ## Settings
-Environment variables stored in redis.  These are populated on deploy from
+Global options stored in redis.  These are populated on the initial deploy from
 config/default_settings.yml.
 - success_ratio_threshold
   - Each proxy is periodically evaluated for its ability to be used on each
@@ -177,10 +173,10 @@ with the API.
 
 # Installation and deploy instructions
 
+## Development
 Before you deploy to production you'll need to create a development environment.
-Your development environment will only require some of the same steps as
-deploying to production.  Install the core apt-get dependencies and rvm.
-From there, run:
+Your development environment will require some of the same steps as
+deploying to production.  [Install rvm](#install-rvm) and run:
 ```
 rvm install ruby2.2.0
 rvm use ruby2.2.0@zartan --create
@@ -189,24 +185,27 @@ cd zartan
 gem install bundler
 bundle install
 ```
+
+Note, some of the dependencies listed in the [initial setup](#initial-setup)
+may be necessary to install these rubies.  These dependencies will vary from
+platform to platform.
+
 Create and modify the
 [config files](#config-files) for development.  Run `bundle exec rails s` to
 start the rails server, and `QUEUE=* rake environment resque:work` to start
 a resque worker.
 
+## Production
 Zartan is a rails application which relies on a database, redis, resque and
-resque-scheduler.  The initial deployment of zartan runs on an ubuntu server,
-uses a postgres database, nginx/unicorn to run the rack workers and uses monit
-for process monitoring.  The database
-can be easily changed in config/database.yml.  The deploy
-procedure assumes that monit is being used for process monitoring, but monit
-is not required to actually run zartan.  The deploy procedure could be
-changed to use some other process monitoring service if necessary.
+resque-scheduler.  The instructions below assume that Zartan will be deployed
+on an Ubuntu system using nginx as a web proxy, Unicorn as the rack HTTP server,
+Postgres as the database backend, and monit for process supervision. The
+specific commands/config files can be adjusted for other production setups.
 
-The rest of the installation instructions will assume the above configuration
-unless otherwise specified.
+<a name="initial-setup"></a>
+1. Initial setup
 
-1. Initial setup. On the target machine, as "superuser":
+  On the target machine, as "superuser":
 
   ```
   sudo apt-get update
@@ -220,8 +219,10 @@ unless otherwise specified.
     libsqlite3-dev \
     zlib1g-dev
   ```
-2. Configure postgres for the `zartan` database user.
 
+2. Database configuration
+
+  Create the `zartan` database user.
   ```
   sudo -u postgres psql <<SETUP
   CREATE USER root;
@@ -252,7 +253,8 @@ unless otherwise specified.
   sudo chown zartan:zartan /var/www/zartan
   ```
 5. Log in to linux as the application user (zartan in this case).
-6. Install rvm.
+<a name="install-rvm"></a>
+6. Install rvm
 
   Note, these instructions install rvm on a user level.
   Rvm can also be installed for all users by the superuser.  See the
@@ -362,7 +364,7 @@ unless otherwise specified.
 12. Set up nginx.
 
   Copy the config file in [config/samples/nginx/zartan](config/samples/nginx/zartan)
-  to `/etc/nginx/sites-enabled/zartan` on the target machine.  This file should
+  to `/etc/nginx/sites-available/zartan` on the target machine.  This file should
   work as-is as long as you're serving your application on the default http port 80.
   ```
   sudo rm /etc/nginx/sites-enabled/default
