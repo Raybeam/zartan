@@ -328,8 +328,8 @@ unless otherwise specified.
   ```
 9. Create config/deploy/production.rb in your dev environment.
 
-  Like the other config files, this has a `.sample` file, but does not get
-  uploaded to the production server unlike the other files.
+  Like the other config files, this has a `.sample` file.  However, this file
+  does not get uploaded to the production server.
 
 10. Initial Deploy. In the dev environment:
 
