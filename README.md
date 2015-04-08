@@ -264,7 +264,8 @@ unless otherwise specified.
   source "$HOME/.rvm/scripts/rvm"
   rvm install 2.2.0
   ```
-7. Config files<a name="config-files"></a>
+<a name="config-files"></a>
+7. Config files
 
   [config/deploy.rb](config/deploy.rb) contains a list of `:linked_files`.
   Each of these files
