@@ -4,4 +4,3 @@ defaults:
   default_retry_interval: 30
   server_ready_timeout: 60
   proxy_age_timeout_seconds: 1800
-  allowed_domains: YOUR_GOOGLE_SITES_DOMAIN_HERE
