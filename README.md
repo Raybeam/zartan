@@ -346,7 +346,7 @@ unless otherwise specified.
   On the target machine, as "superuser":
   Add executable init scripts for unicorn, resque_scheduler and resque_pool to
   /etc/init.d. Sample files are located in
-  (config/samples/init.d)[config/samples/init.d].  These files
+  [config/samples/init.d](config/samples/init.d).  These files
   will work as-is if your application's linux username is `zartan` and rvm was
   installed by the `zartan` user (not the superuser).  Change the `USER` in each
   of the files if the `USER` is not zartan, and change the final `PATH` directory
@@ -379,8 +379,8 @@ unless otherwise specified.
   Add the monit config.  A sample file is located in
   [config/samples/monit/monitrc](config/samples/monit/monitrc).
   This file will probably require modification if
-  You've modified any of the other config files.  Things to check for are the
-  `zartan` username, the port that nginx is serving your application and the
+  you've modified any of the other config files.  Things to check for are the
+  `zartan` username, the port for nginx and the
   port for redis.
   ```
   sudo service monit reload
@@ -407,8 +407,8 @@ unless otherwise specified.
   That will create a `Site` object visible on the admin panel.  The first request
   will fail, but if you go to http://HOSTNAME/resque_web then you should see
   a job to partition your first proxies.  If your first source is DigitalOcean
-  then zartan will not automatically detect/use the proxy you based your image
-  off of.  To add it manually, go to the rails console and run
+  then zartan will not automatically detect/use the proxy that you based your
+  image off of.  To add it manually, go to the rails console and run
   `Source.first.send(:add_proxy, PROXY_IP, PROXY_PORT)`.  Other sources may
   have similar requirements.
 
@@ -471,8 +471,8 @@ a site when there are no proxies available for the site.  Proxies are added to
 the site if any are available.  If not then more proxies are created.
 
 The clients of zartan should always provide an older_than parameter to the GET
-API.  If your clients frequently have to wait for a proxy, but in less time
-than the older_than parameter that they request, then you have your number of
-proxies and number of scraper workers tuned well.  Tune the number of proxies,
+API.  If your clients only have to wait a short time for a proxy
+then you have your configuration tuned well.
+Tune the number of proxies,
 number of scraper workers and `older_than` parameter based upon how quickly you
 need your scraping done against your risk levels for getting blacklisted.
