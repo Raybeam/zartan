@@ -184,9 +184,7 @@ configure redis and rvm.  From there, run:
 ```
 rvm install ruby2.2.0
 rvm use ruby2.2.0@zartan --create
-```
-git clone [.]
-```
+git clone https://github.com/Raybeam/zartan.git
 cd zartan
 gem install bundler
 bundle install
@@ -209,185 +207,210 @@ The rest of the installation instructions will assume the above configuration
 unless otherwise specified.
 
 1. Initial setup. On the target machine, as "superuser":
-```
-sudo apt-get update
-sudo apt-get install -y \
-  build-essential \
-  postgresql \
-  redis-server \
-  nginx \
-  git-core \
-  libpq-dev \
-  libsqlite3-dev \
-  zlib1g-dev
-```
-2. Configure postgres for the `zartan` database user.  Modify as necessary for
-your configuration.
-```
-sudo -u postgres psql <<SETUP
-CREATE USER root;
-CREATE USER zartan LOGIN PASSWORD 'zartan';
-CREATE DATABASE root OWNER root;
-CREATE DATABASE zartan OWNER zartan;
-SETUP
-```
-3. Create a `zartan` user on the Linux OS.  This can be different from the
-user created in postgres.  Substitute as necessary if you use a different user,
-or skip if the user is already created.
-```
-sudo adduser zartan
-# Add with some default password
-sudo vim /etc/ssh/ssh_config
-# replace the line
-#     #   PasswordAuthentication yes
-# with the line
-#         PasswordAuthentication no
-sudo service ssh restart
-```
+
+  ```
+  sudo apt-get update
+  sudo apt-get install -y \
+    build-essential \
+    postgresql \
+    redis-server \
+    nginx \
+    git-core \
+    libpq-dev \
+    libsqlite3-dev \
+    zlib1g-dev
+  ```
+2. Configure postgres for the `zartan` database user.
+
+  ```
+  sudo -u postgres psql <<SETUP
+  CREATE USER root;
+  CREATE USER zartan LOGIN PASSWORD 'zartan';
+  CREATE DATABASE root OWNER root;
+  CREATE DATABASE zartan OWNER zartan;
+  SETUP
+  ```
+3. Create a `zartan` user on the Linux OS.
+
+  This can be different from the
+  user created in postgres.  Substitute as necessary if you use a different user,
+  or skip if the user is already created.
+  ```
+  sudo adduser zartan
+  # Add with some default password
+  sudo vim /etc/ssh/ssh_config
+  # replace the line
+  #     #   PasswordAuthentication yes
+  # with the line
+  #         PasswordAuthentication no
+  sudo service ssh restart
+  ```
 4. Create the base directory for the zartan application
-```
-sudo mkdir -p /var/www/zartan
-sudo chown zartan:zartan /var/www/zartan
-```
+
+  ```
+  sudo mkdir -p /var/www/zartan
+  sudo chown zartan:zartan /var/www/zartan
+  ```
 5. Log in to linux as the application user (zartan in this case).
-6. Install rvm.  Note, these instructions install rvm on a user level.
-Rvm can also be installed for all users by the superuser.  See the
-[RVM installation instructions](https://rvm.io/rvm/install#installation)
-for how to do this.
-```
-gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-\curl -sSL https://get.rvm.io | bash -s stable
-source "$HOME/.rvm/scripts/rvm"
-rvm install 2.2.0
-```
-7. Config files
-config/deploy.rb` contains a list of `:linked_files.  Each of these files
-has a `file_name.sample` file in the repository.  Copy and edit these files
-as appropriate, and put it in the config directory created by these
-instructions:
-```
-zartan_root=/var/www/zartan
-mkdir -p $zartan_root/shared/{config,pids,log}
-```
+6. Install rvm.
+
+  Note, these instructions install rvm on a user level.
+  Rvm can also be installed for all users by the superuser.  See the
+  [RVM installation instructions](https://rvm.io/rvm/install#installation)
+  for how to do this.
+  ```
+  gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+  \curl -sSL https://get.rvm.io | bash -s stable
+  source "$HOME/.rvm/scripts/rvm"
+  rvm install 2.2.0
+  ```
+7. Config files<a name="config-files"></a>
+
+  [config/deploy.rb](config/deploy.rb) contains a list of `:linked_files`.
+  Each of these files
+  has a `file_name.sample` file in the repository.  Copy and edit these files
+  as appropriate, and put it in the config directory created by these
+  instructions:
+  ```
+  zartan_root=/var/www/zartan
+  mkdir -p $zartan_root/shared/{config,pids,log}
+  ```
   1. config/database.yml
-  Fill in the 'production' area with the credentials for your production
-  database.  The development section can remain as is for testing in dev.
+
+    Fill in the 'production' area with the credentials for your production
+    database.  The development section can remain as is for testing in dev.
 
   2. config/redis.yml
-  The sample file can be used as-is if redis is installed
-  on the same server as the web app with the default port.
+
+    The sample file can be used as-is if redis is installed
+    on the same server as the web app with the default port.
 
   3. config/secrets.yml
-  Run `rake secret` in development and put that value in production's
-  `secret_key_base` section.
+
+    Run `rake secret` in development and put that value in production's
+    `secret_key_base` section.
 
   4. config/unicorn.rb
-  You can mostly use the sample file as-is, unless you use a different Linux
-  username.
+
+    You can mostly use the sample file as-is, unless you use a different Linux
+    username.
 
   5. config/google_omniauth.yml
-  Zartan uses Google oauth to authenticate users to the admin UI.  This file
-  allows google to perform this authentication.
-  This file needs modification in both development and production.  To create
-  `google_client_id` and `google_client_secret` fields, create [Google oauth
-  2.0 credentials]
-  (https://developers.google.com/youtube/registering_an_application).
-  Set the redirect uri to http://HOSTNAME/auth/google_oauth2/callback.
-  You can set the HOSTNAME to localhost for development and use the same
-  key/secret among your developers so long as they all use the same ports.
+
+    Zartan uses Google oauth to authenticate users to the admin UI.  This file
+    allows google to perform this authentication.
+    This file needs modification in both development and production.  To create
+    `google_client_id` and `google_client_secret` fields, create [Google oauth
+    2.0 credentials]
+    (https://developers.google.com/youtube/registering_an_application).
+    Set the redirect uri to http://HOSTNAME/auth/google_oauth2/callback.
+    You can set the HOSTNAME to localhost for development and use the same
+    key/secret among your developers so long as they all use the same ports.
 
   6. config/resque_schedule.yml
-  The sample file can be used as-is, but it can be modified if any schedules
-  need to be tweaked.
+
+    The sample file can be used as-is, but it can be modified if any schedules
+    need to be tweaked.
 
   7. config/default_settings.yml
-  The default environment variables.  These can be modified later in the
-  admin panel under the "Settings" tab.  The `allowed_domains` setting must
-  be filled in with your domain which is hosted by google.com.
+
+    The default environment variables.  These can be modified later in the
+    admin panel under the "Settings" tab.  The `allowed_domains` setting must
+    be filled in with your domain which is hosted by google.com.
 
 8. Create an ssh key for the server to pull the source code from github
-```
-ssh-keygen
-cat ~/.ssh/id_rsa.pub
-# Copy the key and add it to your github fork of the Zartan repo as a deploy key
-```
-9. Create config/deploy/production.rb in your dev environment.  Like the
-other config files, this has a `.sample` file, but does not get uploaded
-to the production server unlike the other files.
+
+  ```
+  ssh-keygen
+  cat ~/.ssh/id_rsa.pub
+  # Copy the key and add it to your github fork of the Zartan repo as a deploy key
+  ```
+9. Create config/deploy/production.rb in your dev environment.
+
+  Like the other config files, this has a `.sample` file, but does not get
+  uploaded to the production server unlike the other files.
 
 10. Initial Deploy. In the dev environment:
-```
-# may require "bundle exec" depending on your setup
-cap production deploy --trace
-```
-This step succeeds if the final step complains about monit not being installed.
-We couldn't install monit before now because it depends on files created by
-the initial deploy.  For now, launch the various services manually and install
-monit once everything is working.
 
-11. First Launch. On the target machine, as "superuser":
-Add executable init scripts for unicorn, resque_scheduler and resque_pool to
-/etc/init.d. Sample files are located in config/samples/init.d.  These files
-will work as-is if your application's linux username is `zartan` and rvm was
-installed by the `zartan` user (not the superuser).  Change the `USER` in each
-of the files if the `USER` is not zartan, and change the final `PATH` directory
-to `/usr/local/rvm/wrappers/ruby-2.2.0@zartan` if rvm was installed by the
-superuser.
-```
-sudo service zartan_unicorn start
-sudo service zartan_resque_pool start
-# Verify that unicorn and resque processes are running
-ps -ef | egrep 'unicorn|resque'
-```
+  ```
+  # may require "bundle exec" depending on your setup
+  cap production deploy --trace
+  ```
+  This step succeeds if the final step complains about monit not being installed.
+  We couldn't install monit before now because it depends on files created by
+  the initial deploy.  For now, launch the various services manually and install
+  monit once everything is working.
+
+11. First Launch.
+
+  On the target machine, as "superuser":
+  Add executable init scripts for unicorn, resque_scheduler and resque_pool to
+  /etc/init.d. Sample files are located in
+  (config/samples/init.d)[config/samples/init.d].  These files
+  will work as-is if your application's linux username is `zartan` and rvm was
+  installed by the `zartan` user (not the superuser).  Change the `USER` in each
+  of the files if the `USER` is not zartan, and change the final `PATH` directory
+  to `/usr/local/rvm/wrappers/ruby-2.2.0@zartan` if rvm was installed by the
+  superuser.
+  ```
+  sudo service zartan_unicorn start
+  sudo service zartan_resque_pool start
+  # Verify that unicorn and resque processes are running
+  ps -ef | egrep 'unicorn|resque'
+  ```
 
 12. Set up nginx.
-Copy the config file in config/samples/nginx/zartan to
-`/etc/nginx/sites-enabled/zartan` on the target machine.  This file should
-work as-is as long as you're serving your application on the default http port
-80.
-```
-sudo rm /etc/nginx/sites-enabled/default
-sudo ln -s /etc/nginx/sites-available/zartan /etc/nginx/sites-enabled/zartan
-sudo service nginx restart
-# Verify that the application is being served on port 80
-```
+
+  Copy the config file in [config/samples/nginx/zartan](config/samples/nginx/zartan)
+  to `/etc/nginx/sites-enabled/zartan` on the target machine.  This file should
+  work as-is as long as you're serving your application on the default http port 80.
+  ```
+  sudo rm /etc/nginx/sites-enabled/default
+  sudo ln -s /etc/nginx/sites-available/zartan /etc/nginx/sites-enabled/zartan
+  sudo service nginx restart
+  # Verify that the application is being served on port 80
+  ```
 
 11. Install monit
-```
-sudo apt-get install -y monit
-```
-Add the monit config.  A sample file is located in
-config/samples/monit/monitrc.  This file will probably require modification if
-You've modified any of the other config files.  Things to check for are the
-`zartan` username, the port that nginx is serving your application and the
-port for redis.
-```
-sudo service monit reload
-# Verify that monit is running and monitoring the relevant processes
-sudo monit status
-```
+
+  ```
+  sudo apt-get install -y monit
+  ```
+  Add the monit config.  A sample file is located in
+  [config/samples/monit/monitrc](config/samples/monit/monitrc).
+  This file will probably require modification if
+  You've modified any of the other config files.  Things to check for are the
+  `zartan` username, the port that nginx is serving your application and the
+  port for redis.
+  ```
+  sudo service monit reload
+  # Verify that monit is running and monitoring the relevant processes
+  sudo monit status
+  ```
 
 12. Optional validation. In the dev environment:
-```
-cap production deploy --trace
-```
-Check to see that the deploy process correctly detected monit running and
-restarted it (this should be the last operation it performed). If you like, ssh
-into the target machine and tunnel 2812:localhost:2812, then log in to the
-monit web interface. From here, you can check that the
-uptime of unicorn and resque_pool is small (i.e., that they were restarted by
-the deploy process).
+
+  ```
+  cap production deploy --trace
+  ```
+  Check to see that the deploy process correctly detected monit running and
+  restarted it (this should be the last operation it performed). If you like, ssh
+  into the target machine and tunnel 2812:localhost:2812, then log in to the
+  monit web interface. From here, you can check that the
+  uptime of unicorn and resque_pool is small (i.e., that they were restarted by
+  the deploy process).
 
 13. Where to go from here
-You'll need to create one or more `Source` objects in the admin panel.  Once
-you have a single `Source` you can make your first API request to get a proxy.
-That will create a `Site` object visible on the admin panel.  The first request
-will fail, but if you go to http://HOSTNAME/resque_web then you should see
-a job to partition your first proxies.  If your first source is DigitalOcean
-then zartan will not automatically detect/use the proxy you based your image
-off of.  To add it manually, go to the rails console and run
-`Source.first.send(:add_proxy, PROXY_IP, PROXY_PORT)`.  Other sources may
-have similar requirements.
+
+  You'll need to create one or more `Source` objects in the admin panel.  Once
+  you have a single `Source` you can make your first API request to get a proxy.
+  That will create a `Site` object visible on the admin panel.  The first request
+  will fail, but if you go to http://HOSTNAME/resque_web then you should see
+  a job to partition your first proxies.  If your first source is DigitalOcean
+  then zartan will not automatically detect/use the proxy you based your image
+  off of.  To add it manually, go to the rails console and run
+  `Source.first.send(:add_proxy, PROXY_IP, PROXY_PORT)`.  Other sources may
+  have similar requirements.
 
 # Technical details
 Operation and maintenance of zartan requires ruby programming knowledge.
