@@ -178,9 +178,9 @@ with the API.
 # Installation and deploy instructions
 
 Before you deploy to production you'll need to create a development environment.
-Your development environment will require some of the same steps as deploying
-to production, but you only need to install the core apt-get dependencies,
-configure redis and rvm.  From there, run:
+Your development environment will only require some of the same steps as
+deploying to production.  Install the core apt-get dependencies and rvm.
+From there, run:
 ```
 rvm install ruby2.2.0
 rvm use ruby2.2.0@zartan --create
@@ -198,9 +198,9 @@ Zartan is a rails application which relies on a database, redis, resque and
 resque-scheduler.  The initial deployment of zartan runs on an ubuntu server,
 uses a postgres database, nginx/unicorn to run the rack workers and uses monit
 for process monitoring.  The database
-can be easily changed in config/database.yml.  The deployment
+can be easily changed in config/database.yml.  The deploy
 procedure assumes that monit is being used for process monitoring, but monit
-is not required to actually run zartan.  The deployment procedure could be
+is not required to actually run zartan.  The deploy procedure could be
 changed to use some other process monitoring service if necessary.
 
 The rest of the installation instructions will assume the above configuration
@@ -270,11 +270,10 @@ unless otherwise specified.
   [config/deploy.rb](config/deploy.rb) contains a list of `:linked_files`.
   Each of these files
   has a `file_name.sample` file in the repository.  Copy and edit these files
-  as appropriate, and put it in the config directory created by these
+  as appropriate, and put them in the config directory created by these
   instructions:
   ```
-  zartan_root=/var/www/zartan
-  mkdir -p $zartan_root/shared/{config,pids,log}
+  mkdir -p /var/www/zartan/shared/{config,pids,log}
   ```
   1. config/database.yml
 
