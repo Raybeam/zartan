@@ -312,11 +312,11 @@ unless otherwise specified.
     The sample file can be used as-is, but it can be modified if any schedules
     need to be tweaked.
 
-  7. config/default_settings.yml
+  7. config/auth.yml
 
-    The default environment variables.  These can be modified later in the
-    admin panel under the "Settings" tab.  The `allowed_domains` setting must
-    be filled in with your domain which is hosted by google.com.
+    The `allowed_domains` setting must
+    be filled in with a domain which is hosted by google.com.  More nuanced
+    authentication settings could go here if they're implemented.
 
 8. Create an ssh key for the server to pull the source code from github
 
