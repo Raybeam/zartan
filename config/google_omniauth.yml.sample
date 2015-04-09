@@ -1,5 +1,6 @@
 default: &default
-  allowed_domains: YOUR_GOOGLE_DOMAIN_HERE
+  allowed_domains:
+    - YOUR_GOOGLE_DOMAIN_HERE
 
 development:
   <<: *default

@@ -6,7 +6,7 @@ require 'rails/all'
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
-ENV.update YAML.load_file("config/google_omniauth.yml")[Rails.env] rescue {}
+GOOGLE_OMNIAUTH = YAML.load_file("config/google_omniauth.yml")[Rails.env]
 
 module Zartan
   class Application < Rails::Application
