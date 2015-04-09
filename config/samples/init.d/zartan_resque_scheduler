@@ -1,0 +1,57 @@
+#! /bin/bash
+
+### BEGIN INIT INFO
+# Provides:          zartan_resque_scheduler
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the resque scheduler
+# Description:       starts the resque scheduler
+### END INIT INFO
+
+ZARTAN_ROOT=/var/www/zartan
+USER=zartan
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/home/$USER/.rvm/wrappers/ruby-2.2.0/
+
+DAEMON=bundle
+DAEMON_OPTS="exec rake resque:scheduler"
+
+# environment variables used by the rake task
+export PIDFILE=$ZARTAN_ROOT/shared/pids/resque_scheduler.pid
+export BACKGROUND=true
+export LOGFILE=$ZARTAN_ROOT/shared/log/resque_scheduler.stdout.log
+export APP_NAME=zartan_resque_scheduler
+export RAILS_ENV=production
+
+DESC=resque_scheduler
+
+cd $ZARTAN_ROOT/current
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+    $DAEMON $DAEMON_OPTS
+    echo "$APP_NAME."
+  ;;
+  stop)
+    echo -n "Stopping $DESC: "
+    kill -QUIT `cat $PIDFILE`
+    echo "$APP_NAME."
+  ;;
+  restart)
+    echo -n "Restarting $DESC: "
+    kill -QUIT `cat $PIDFILE`
+    while [[ -e $PIDFILE ]]; do true; done
+    $DAEMON $DAEMON_OPTS
+    echo "$APP_NAME."
+  ;;
+  *)
+    echo "Usage: $APP_NAME {start|stop|restart}" >&2
+    exit 1
+  ;;
+esac
+cd -
+
+exit 0
+

@@ -4,7 +4,6 @@ lock '3.4.0'
 set :application, 'zartan'
 
 set :scm, :git
-set :repo_url, 'git@github.com:Raybeam/zartan.git'
 set :branch, 'master'
 
 set :deploy_to, '/var/www/zartan'

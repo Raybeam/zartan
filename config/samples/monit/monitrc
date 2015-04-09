@@ -1,0 +1,60 @@
+set daemon 120            # check services at 2-minute intervals
+  with start delay 240    # starting 4 minutes after startup
+
+set logfile /var/log/monit.log
+set idfile /var/lib/monit/id
+set statefile /var/lib/monit/state
+
+## Monit has an embedded web server which can be used to view status of
+## services monitored and manage services from a web interface. See the
+## Monit Wiki if you want to enable SSL for the web server.
+#
+set httpd port 2812 and
+  use address localhost
+  allow localhost
+  allow 0.0.0.0/0.0.0.0
+  allow admin:zartan
+
+
+## PROCESS CHECKS
+
+check process nginx with pidfile /var/run/nginx.pid
+    start program = "/etc/init.d/nginx start"
+    stop program  = "/etc/init.d/nginx stop"
+  if failed host localhost port 80 with protocol http and request "/robots.txt" then restart
+  if 3 restarts within 5 cycles then timeout
+
+check process postgres with pidfile /var/run/postgresql/9.3-main.pid
+    start program = "/etc/init.d/postgresql start"
+    stop program = "/etc/init.d/postgresql stop"
+  if failed unixsocket /var/run/postgresql/.s.PGSQL.5432 with protocol pgsql then restart
+  if 3 restarts within 5 cycles then timeout
+
+check process redis-server with pidfile /var/run/redis/redis-server.pid
+    start program = "/etc/init.d/redis-server start"
+    stop program = "/etc/init.d/redis-server stop"
+  if failed host localhost port 6379 then restart
+  if 3 restarts within 5 cycles then timeout
+
+
+## ZARTAN APP GROUP
+
+check process unicorn with pidfile /var/www/zartan/shared/pids/unicorn.pid
+    start program = "/etc/init.d/zartan_unicorn start"
+    stop program = "/etc/init.d/zartan_unicorn stop"
+  if failed host localhost port 80 with protocol http and request "/" then restart
+  if 3 restarts within 5 cycles then timeout
+  group zartan_app
+
+check process resque_pool with pidfile /var/www/zartan/shared/pids/resque_pool.pid
+    start program = "/etc/init.d/zartan_resque_pool start"
+    stop program = "/etc/init.d/zartan_resque_pool stop"
+  if 3 restarts within 5 cycles then timeout
+  group zartan_app
+
+check process resque_scheduler with pidfile /var/www/zartan/shared/pids/resque_scheduler.pid
+    start program = "/etc/init.d/zartan_resque_scheduler start"
+    stop program = "/etc/init.d/zartan_resque_scheduler stop"
+  if 3 restarts within 5 cycles then timeout
+  group zartan_app
+
