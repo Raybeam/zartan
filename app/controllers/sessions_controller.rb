@@ -2,7 +2,7 @@ class SessionsController < ApplicationController
 
   def create
     domain = env["omniauth.auth"]["info"]["email"].split('@').last
-    allowed_domains = ['raybeam.com']
+    allowed_domains = GOOGLE_OMNIAUTH.fetch('allowed_domains')
     if allowed_domains.include?(domain)
       user = User.from_omniauth(env["omniauth.auth"])
       session[:user_id] = user.id

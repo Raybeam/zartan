@@ -1,13 +1,20 @@
+default: &default
+  allowed_domains:
+    - YOUR_GOOGLE_DOMAIN_HERE
+
 development:
+  <<: *default
   google_client_id: ""
   google_client_secret: ""
 
 test:
+  <<: *default
   google_client_id: ""
   google_client_secret: ""
 
 # Do not keep production secrets in the repository,
 # instead read values from the config on server.
 production:
+  <<: *default
   google_client_id: ""
   google_client_secret: ""
