@@ -10,10 +10,10 @@ server 'hostname', user: 'zartan', roles: %w{app db web}
 set :repo_url, 'git@YOUR_GIT_SSH_URL.git'
 
 # Override any environment variables
-set :default_env, -> { fetch(:default_env).merge({
+fetch(:default_env).merge!({
   ## Uncomment below if your environment has rvm installed on the system level
   #rvm_bin_path: '/usr/local/rvm'
-}}
+})
 
 # Your environment may use a different gemset.  Specify that here.
 set :rvm_ruby_version, '2.2.0@zartan'
