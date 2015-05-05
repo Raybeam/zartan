@@ -190,8 +190,34 @@ Note, some of the dependencies listed in the [initial setup](#initial-setup)
 may be necessary to install these rubies.  These dependencies will vary from
 platform to platform.
 
+### Running in development
+
+Although not necessary for deploy, you can also run zartan in development.
+If you do, there are a few additional steps.
+
 Create and modify the
-[config files](#config-files) for development.  Run `bundle exec rails s` to
+[config files](#config-files) for development.  Change directories to
+the root of zartan and run:
+```
+gem install bundler
+bundle install
+rake db:migrate
+```
+
+Unlike produciton, the values in
+[config/default_settings.yml](config/default_settings.yml) do not get
+automatically copied over.  You have to set them manually
+```
+vagrant@vagrant-ubuntu-trusty-64:/vagrant$ rails c
+Loading development environment (Rails 4.2.0)
+2.2.0 :001 > conf = Zartan::Config.new
+ => #<Zartan::Config:0x00000006bfeec8 @config_cache={}> 
+2.2.0 :002 > conf['failure_threshold'] = 5
+ => 5 
+...
+```
+
+Run `bundle exec rails s` to
 start the rails server, and `QUEUE=* rake environment resque:work` to start
 a resque worker.
 
@@ -282,22 +308,7 @@ specific commands/config files can be adjusted for other production setups.
     Fill in the 'production' area with the credentials for your production
     database.  The development section can remain as is for testing in dev.
 
-  2. config/redis.yml
-
-    The sample file can be used as-is if redis is installed
-    on the same server as the web app with the default port.
-
-  3. config/secrets.yml
-
-    Run `rake secret` in development and put that value in production's
-    `secret_key_base` section.
-
-  4. config/unicorn.rb
-
-    You can mostly use the sample file as-is, unless you use a different Linux
-    username.
-
-  5. config/google_omniauth.yml
+  1. config/google_omniauth.yml
 
     Zartan uses Google oauth to authenticate users to the admin UI.  This file
     allows google to perform this authentication.
@@ -309,16 +320,25 @@ specific commands/config files can be adjusted for other production setups.
     You can set the HOSTNAME to localhost for development and use the same
     key/secret among your developers so long as they all use the same ports.
 
-  6. config/resque_schedule.yml
+  1. config/redis.yml
+
+    The sample file can be used as-is if redis is installed
+    on the same server as the web app with the default port.
+
+  1. config/resque_schedule.yml
 
     The sample file can be used as-is, but it can be modified if any schedules
     need to be tweaked.
 
-  7. config/auth.yml
+  1. config/secrets.yml
 
-    The `allowed_domains` setting must
-    be filled in with a domain which is hosted by google.com.  More nuanced
-    authentication settings could go here if they're implemented.
+    Run `rake secret` in development and put that value in production's
+    `secret_key_base` section.
+
+  1. config/unicorn.rb
+
+    You can mostly use the sample file as-is, unless you use a different Linux
+    username.
 
 8. Create an ssh key for the server to pull the source code from github
 

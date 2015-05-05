@@ -49,8 +49,8 @@ module Sources
       server = connection.servers.select do |s|
         s.public_ip_address == proxy.host
       end.first
-      return NoServer if server.nil?
-      server
+
+      server || NoServer
     end
 
     # The ID_TYPES methods all are very similar, so dynamically create all

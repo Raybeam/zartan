@@ -11,11 +11,11 @@ set :default_env, { rvm_bin_path: '~/.rvm/bin' }
 
 set :linked_files, %w{
   config/database.yml
+  config/google_omniauth.yml
   config/redis.yml
+  config/resque_schedule.yml
   config/secrets.yml
   config/unicorn.rb
-  config/google_omniauth.yml
-  config/resque_schedule.yml
 }
 set :rails_env, :production
 set :log_level, :info
