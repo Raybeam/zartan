@@ -50,6 +50,10 @@ class Client
     proxy
   end
 
+  def to_h
+    {'client_id' => id}
+  end
+
   class << self
     alias_method :[], :new
     alias_method :find, :new
