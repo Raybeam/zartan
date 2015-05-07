@@ -28,9 +28,9 @@ class Site < ActiveRecord::Base
   #               any proxy will do, as no proxy was used more than 1 second
   #               in the future)
   # Returns:
-  #   - a Proxy instance if we found one used long enough ago
-  #   - Proxy::NotReady(timeout) if we found an instance, but it won't be
-  #     old enough until `timeout` seconds from now
+  #   - A Proxy instance if we found one used long enough ago
+  #   - A Proxy::NotReady instance. If we found a proxy, but it won't be
+  #     old enough until not_ready.timeout seconds from now
   #   - Proxy::NoProxy if we didn't find any proxies at all
   def select_proxy(older_than=-1)
     proxy_id, proxy_ts = nil, nil

@@ -40,19 +40,25 @@ RSpec.describe Client, redis:true do
     end
 
     it 'caches a proxy when a reservation is necessary' do
-      no_proxy = Proxy::NotReady.new(1300, 1000, 1)
+      no_proxy = Proxy::NotReady.new(1200, 1000, 1)
       expect(site).to receive(:select_proxy).and_return(no_proxy)
       expect(client).to receive(:reserve_proxy)
 
       result = client.get_proxy(site, 300)
       expect(result).to be_an_instance_of Proxy::NotReady
+      expect(result.timeout).to eq 200
     end
 
     it 'returns a wait time when reserved proxy is too hot' do
+      now = Time.now
+      allow(Time).to receive(:now).and_return(now)
       client.reserve_proxy site, proxy.id, Time.now.to_i
+      # "Wait" 30 seconds before calling get_proxy
+      allow(Time).to receive(:now).and_return(now+30)
 
       result = client.get_proxy(site, 300)
       expect(result).to be_an_instance_of Proxy::NotReady
+      expect(result.timeout).to eq 270
     end
 
     it 'returns a reserved proxy' do

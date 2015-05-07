@@ -23,19 +23,38 @@ It is expected that you run Zartan on your own server.  This is not a public web
 service.
 
 # API Usage
-All of the below GET and PUT requests require an api_key parameter.  The
-responses are all JSON.  If the api_key is missing or invalid, the response is:
+
+## Authentication
+In order to receive a proxy you must authenticate with the system.
+Successful authentication returns a client_id which is used for all other API calls.
+```
+GET http://HOST_NAME/v2/authenticate?api_key=API_KEY
+```
+A successful response looks similar to this:
+```
+{"result":"success","payload":{"client_id":"CLIENT_ID"}}
+```
+Use the client_id in all other API calls.
+If the api_key is missing or invalid, the response is:
 ```
 {"result":"error","reason":"Unrecognized API Key"}
 ```
 Go to the admin panel, generate
-an api_key and use that when making further requests.
+an api_key and use that when making authentication requests.
+
+All other API calls require a client_id parameter.  If that client_id expires
+the response is:
+```
+{"result":"error","reason":"Unrecognized client id"}
+```
+Re-authenticate and use the new client id.
 
 ## Get a new proxy
 ```
-GET http://HOST_NAME/v1/SITE_NAME
+GET http://HOST_NAME/v2/proxy_for/SITE_NAME
 ```
 Parameters
+- *client_id*
 - older_than (optional)
   - Minimum time (in seconds) since the selected proxy's last use
 
@@ -67,9 +86,12 @@ client is asked to wait `interval` seconds before they make another request.
 
 ## Report proxy success/failure
 ```
-POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/succeeded
-POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/failed
+POST http://HOST_NAME/v2/report/SITE_NAME/PROXY_ID/succeeded
+POST http://HOST_NAME/v2/report/SITE_NAME/PROXY_ID/failed
 ```
+Parameters
+- *client_id*
+
 The GET request gives a PROXY_ID for use with these POST URIs.  These
 inform zartan that the proxy with whose that ID has either successfully scraped
 a page or failed to scrape a page.
