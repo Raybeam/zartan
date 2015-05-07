@@ -224,19 +224,7 @@ the root of zartan and run:
 gem install bundler
 bundle install
 rake db:migrate
-```
-
-Unlike produciton, the values in
-[config/default_settings.yml](config/default_settings.yml) do not get
-automatically copied over.  You have to set them manually
-```
-vagrant@vagrant-ubuntu-trusty-64:/vagrant$ rails c
-Loading development environment (Rails 4.2.0)
-2.2.0 :001 > conf = Zartan::Config.new
- => #<Zartan::Config:0x00000006bfeec8 @config_cache={}> 
-2.2.0 :002 > conf['failure_threshold'] = 5
- => 5 
-...
+rake config:seed
 ```
 
 Run `bundle exec rails s` to
