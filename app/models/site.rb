@@ -28,9 +28,9 @@ class Site < ActiveRecord::Base
   #               any proxy will do, as no proxy was used more than 1 second
   #               in the future)
   # Returns:
-  #   - a Proxy instance if we found one used long enough ago
-  #   - Proxy::NoColdProxy(timeout) if we found an instance, but it won't be
-  #     old enough until `timeout` seconds from now
+  #   - A Proxy instance if we found one used long enough ago
+  #   - A Proxy::NotReady instance. If we found a proxy, but it won't be
+  #     old enough until not_ready.timeout seconds from now
   #   - Proxy::NoProxy if we didn't find any proxies at all
   def select_proxy(older_than=-1)
     proxy_id, proxy_ts = nil, nil
@@ -50,7 +50,7 @@ class Site < ActiveRecord::Base
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
+        Proxy::NotReady.new(proxy_ts, threshold_ts, proxy_id)
       else
         touch_proxy(proxy_id)
         Proxy.find(proxy_id)
@@ -151,6 +151,10 @@ class Site < ActiveRecord::Base
     end
   end
 
+  def touch_proxy(proxy_id)
+    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
+  end
+
   private
 
   def latest_proxy_info
@@ -247,10 +251,6 @@ class Site < ActiveRecord::Base
 
   def failure_threshold
     @failure_threshold ||= Zartan::Config.new['failure_threshold'].to_i
-  end
-
-  def touch_proxy(proxy_id)
-    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
 
   def proxy_performance(proxy)

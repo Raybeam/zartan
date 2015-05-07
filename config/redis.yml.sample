@@ -1,12 +1,17 @@
+default: &default
+  client_session_timeout: 300
 development:
+  <<: *default
   host: localhost
   port: 6379
   db: 0
 test:
+  <<: *default
   host: localhost
   port: 6379
   db: 1
 production:
+  <<: *default
   host: localhost
   port: 6379
   db: 0

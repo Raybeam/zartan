@@ -4,6 +4,11 @@ class Permission
       allow 'home', [:index]
       allow 'sessions', [:create]
       allow 'api/version1_controller', [:get_proxy, :report_result]
+      allow 'api/version2_controller', [
+        :authenticate,
+        :get_proxy,
+        :report_result
+      ]
     else
       allow_all
     end

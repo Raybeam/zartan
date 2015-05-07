@@ -202,16 +202,16 @@ RSpec.describe Site, type: :model do
       end
 
 
-      it "should return NoColdProxy when there are no sufficiently old proxies" do
+      it "should return NotReady when there are no sufficiently old proxies" do
         base_ts = Time.now.to_i - 60
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
         expect(site).to receive(:touch_proxy).never
 
-        expect(site.select_proxy(120)).to be_instance_of(Proxy::NoColdProxy)
+        expect(site.select_proxy(120)).to be_instance_of(Proxy::NotReady)
       end
 
 
-      it "should set the NoColdProxy's timeout appropriately" do
+      it "should set the NotReady's timeout appropriately" do
         base_ts = Time.now.to_i - 60
         @redis.zadd( site.proxy_pool.key, base_ts, proxy.id )
         expect(site).to receive(:touch_proxy).never

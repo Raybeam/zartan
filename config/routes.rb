@@ -9,6 +9,11 @@ Rails.application.routes.draw do
     get  'v1/:site_name',                     to: 'api/version1#get_proxy'
     post 'v1/:site_name/:proxy_id/succeeded', to: 'api/version1#report_result', succeeded: true
     post 'v1/:site_name/:proxy_id/failed',    to: 'api/version1#report_result', succeeded: false
+
+    get  'v2/authenticate',                          to: 'api/version2#authenticate'
+    get  'v2/proxy_for/:site_name',                  to: 'api/version2#get_proxy'
+    post 'v2/report/:site_name/:proxy_id/succeeded', to: 'api/version2#report_result', succeeded: true
+    post 'v2/report/:site_name/:proxy_id/failed',    to: 'api/version2#report_result', succeeded: false
   end
   
   # Admin UI Routes

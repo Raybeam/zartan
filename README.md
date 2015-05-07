@@ -23,19 +23,38 @@ It is expected that you run Zartan on your own server.  This is not a public web
 service.
 
 # API Usage
-All of the below GET and PUT requests require an api_key parameter.  The
-responses are all JSON.  If the api_key is missing or invalid, the response is:
+
+## Authentication
+In order to receive a proxy you must authenticate with the system.
+Successful authentication returns a client_id which is used for all other API calls.
+```
+GET http://HOST_NAME/v2/authenticate?api_key=API_KEY
+```
+A successful response looks similar to this:
+```
+{"result":"success","payload":{"client_id":"CLIENT_ID"}}
+```
+Use the client_id in all other API calls.
+If the api_key is missing or invalid, the response is:
 ```
 {"result":"error","reason":"Unrecognized API Key"}
 ```
 Go to the admin panel, generate
-an api_key and use that when making further requests.
+an api_key and use that when making authentication requests.
+
+All other API calls require a client_id parameter.  If that client_id expires
+the response is:
+```
+{"result":"error","reason":"Unrecognized client id"}
+```
+Re-authenticate and use the new client id.
 
 ## Get a new proxy
 ```
-GET http://HOST_NAME/v1/SITE_NAME
+GET http://HOST_NAME/v2/proxy_for/SITE_NAME
 ```
 Parameters
+- *client_id*
 - older_than (optional)
   - Minimum time (in seconds) since the selected proxy's last use
 
@@ -67,9 +86,12 @@ client is asked to wait `interval` seconds before they make another request.
 
 ## Report proxy success/failure
 ```
-POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/succeeded
-POST http://HOST_NAME/v1/SITE_NAME/PROXY_ID/failed
+POST http://HOST_NAME/v2/report/SITE_NAME/PROXY_ID/succeeded
+POST http://HOST_NAME/v2/report/SITE_NAME/PROXY_ID/failed
 ```
+Parameters
+- *client_id*
+
 The GET request gives a PROXY_ID for use with these POST URIs.  These
 inform zartan that the proxy with whose that ID has either successfully scraped
 a page or failed to scrape a page.
@@ -190,8 +212,22 @@ Note, some of the dependencies listed in the [initial setup](#initial-setup)
 may be necessary to install these rubies.  These dependencies will vary from
 platform to platform.
 
+### Running in development
+
+Although not necessary for deploy, you can also run zartan in development.
+If you do, there are a few additional steps.
+
 Create and modify the
-[config files](#config-files) for development.  Run `bundle exec rails s` to
+[config files](#config-files) for development.  Change directories to
+the root of zartan and run:
+```
+gem install bundler
+bundle install
+rake db:migrate
+rake config:seed
+```
+
+Run `bundle exec rails s` to
 start the rails server, and `QUEUE=* rake environment resque:work` to start
 a resque worker.
 
@@ -282,22 +318,7 @@ specific commands/config files can be adjusted for other production setups.
     Fill in the 'production' area with the credentials for your production
     database.  The development section can remain as is for testing in dev.
 
-  2. config/redis.yml
-
-    The sample file can be used as-is if redis is installed
-    on the same server as the web app with the default port.
-
-  3. config/secrets.yml
-
-    Run `rake secret` in development and put that value in production's
-    `secret_key_base` section.
-
-  4. config/unicorn.rb
-
-    You can mostly use the sample file as-is, unless you use a different Linux
-    username.
-
-  5. config/google_omniauth.yml
+  1. config/google_omniauth.yml
 
     Zartan uses Google oauth to authenticate users to the admin UI.  This file
     allows google to perform this authentication.
@@ -309,16 +330,25 @@ specific commands/config files can be adjusted for other production setups.
     You can set the HOSTNAME to localhost for development and use the same
     key/secret among your developers so long as they all use the same ports.
 
-  6. config/resque_schedule.yml
+  1. config/redis.yml
+
+    The sample file can be used as-is if redis is installed
+    on the same server as the web app with the default port.
+
+  1. config/resque_schedule.yml
 
     The sample file can be used as-is, but it can be modified if any schedules
     need to be tweaked.
 
-  7. config/auth.yml
+  1. config/secrets.yml
 
-    The `allowed_domains` setting must
-    be filled in with a domain which is hosted by google.com.  More nuanced
-    authentication settings could go here if they're implemented.
+    Run `rake secret` in development and put that value in production's
+    `secret_key_base` section.
+
+  1. config/unicorn.rb
+
+    You can mostly use the sample file as-is, unless you use a different Linux
+    username.
 
 8. Create an ssh key for the server to pull the source code from github
 
