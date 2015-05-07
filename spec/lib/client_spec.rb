@@ -29,19 +29,43 @@ RSpec.describe Client, redis:true do
     expect(built_client.valid?).to be_falsey
   end
 
-  it 'retrieves a proxy' do
-    client.reserve_proxy site, proxy, 0
+  context '#get_proxy' do
+    it 'returns a proxy when reservation is unnecessary' do
+      expect(site).to receive(:select_proxy).and_return(proxy)
+      expect(client).to receive(:reserve_proxy).never
 
-    expect(client.get_proxy(site).id).to eq proxy.id
-  end
+      proxy = client.get_proxy(site, 300)
 
-  it 'does not retrieve a hot proxy' do
-    client.reserve_proxy site, proxy, 300
+      expect(proxy).to be_an_instance_of Proxy
+    end
 
-    expect(client.get_proxy(site)).to be_an_instance_of Proxy::NoColdProxy
-  end
+    it 'caches a proxy when a reservation is necessary' do
+      no_proxy = Proxy::NoColdProxy.new(300)
+      expect(site).to receive(:select_proxy).and_return(no_proxy)
+      expect(client).to receive(:reserve_proxy)
 
-  it 'does not retrieve a proxy if none is cached' do
-    expect(client.get_proxy(site)).to be Proxy::NoProxy
+      result = client.get_proxy(site, 300)
+      expect(result).to be_an_instance_of Proxy::NoColdProxy
+    end
+
+    it 'returns a wait time when reserved proxy is too hot' do
+      client.reserve_proxy site, proxy
+
+      result = client.get_proxy(site, 300)
+      expect(result).to be_an_instance_of Proxy::NoColdProxy
+    end
+
+    it 'returns a reserved proxy' do
+      client.reserve_proxy site, proxy.id
+
+      # Check to make sure we got our reserved proxy
+      result = client.get_proxy(site, 0)
+      expect(result.id).to eq proxy.id
+
+      # Check to make sure the reservation has been removed
+      not_a_proxy = double
+      expect(site).to receive(:select_proxy).and_return(not_a_proxy)
+      expect(client.get_proxy(site,0)).to be not_a_proxy
+    end
   end
 end

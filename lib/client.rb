@@ -29,25 +29,36 @@ class Client
     expiring_keys.each { |k| k.delete(site.id) }
   end
 
-  def reserve_proxy(site, proxy, seconds_from_now)
-    next_proxy[site.id] = proxy.id
-    next_proxy_available[site.id] = (Time.now + seconds_from_now.seconds).to_i
+  def reserve_proxy(site, proxy_id)
+    next_proxy[site.id] = proxy_id
+    next_proxy_available[site.id] = Time.now.to_i
     touch
   end
 
-  def get_proxy(site)
-    available_at = next_proxy_available[site.id].andand.to_i
-    if available_at.nil?
-      proxy = Proxy::NoProxy
-    elsif Time.now.to_i < available_at
-      proxy = Proxy::NoColdProxy.new(available_at - Time.now.to_i)
+  def get_proxy(site, older_than)
+    reserved_at = next_proxy_available[site.id].andand.to_i
+    # We do not have a proxy reserved for this client/site combination.
+    # Find a proxy using the Site methods.
+    if reserved_at.nil?
+      result = site.select_proxy(older_than)
+      # Cache a hot proxy for a later request.
+      reserve_proxy site, result.proxy_id if result.is_a? Proxy::NoColdProxy
     else
-      proxy = Proxy.find(next_proxy[site.id])
-      delete site
+      remaining_time = reserved_at + older_than - Time.now.to_i
+      proxy_id = next_proxy[site.id]
+      # Our chached proxy is still too hot
+      if remaining_time > 0
+        result = Proxy::NoColdProxy.new(remaining_time)
+      # We have a chached proxy ready for use.
+      else
+        result = Proxy.find proxy_id
+        delete site
+      end
+      site.touch_proxy proxy_id
     end
     touch
 
-    proxy
+    result
   end
 
   def to_h

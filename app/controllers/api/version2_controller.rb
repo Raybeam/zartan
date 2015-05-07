@@ -15,7 +15,7 @@ module Api
     def get_proxy
       check_client_id_and_site do
         older_than = (params[:older_than] || -1).to_i
-        result = @site.select_proxy(older_than)
+        result = @client.select_proxy(@site, older_than)
         if result == Proxy::NoProxy
           render json: Responses::try_again
         elsif result.is_a? Proxy::NoColdProxy
@@ -39,8 +39,6 @@ module Api
           # Swallow not-found-type errors
         end
         render json: Responses::success
-      else
-        render json: Responses::failure('Unrecognized API Key')
       end
     end
     
@@ -50,8 +48,8 @@ module Api
     end
 
     def check_client_id_and_site(&block)
-      client = Client[params[:client_id]
-      if client.valid?
+      @client = Client[params[:client_id]]
+      if @client.valid?
         set_site
         yield
       else

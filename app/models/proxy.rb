@@ -56,5 +56,5 @@ class Proxy < ActiveRecord::Base
   end
 
   NoProxy = Class.new
-  NoColdProxy = Struct.new(:timeout)
+  NoColdProxy = Struct.new(:timeout, :proxy_id)
 end

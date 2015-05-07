@@ -50,7 +50,7 @@ class Site < ActiveRecord::Base
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        Proxy::NoColdProxy.new(proxy_ts - threshold_ts)
+        Proxy::NoColdProxy.new(proxy_ts - threshold_ts, proxy_id)
       else
         touch_proxy(proxy_id)
         Proxy.find(proxy_id)
@@ -151,6 +151,10 @@ class Site < ActiveRecord::Base
     end
   end
 
+  def touch_proxy(proxy_id)
+    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
+  end
+
   private
 
   def latest_proxy_info
@@ -247,10 +251,6 @@ class Site < ActiveRecord::Base
 
   def failure_threshold
     @failure_threshold ||= Zartan::Config.new['failure_threshold'].to_i
-  end
-
-  def touch_proxy(proxy_id)
-    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
   end
 
   def proxy_performance(proxy)
