@@ -3,15 +3,15 @@ class Client
 
   include Redis::Objects
   EXPIRATION_INTERVAL = REDIS_CONFIG.fetch('client_session_timeout', 300)
-  hash_key :next_proxy, expiration: EXPIRATION_INTERVAL
-  hash_key :next_proxy_available, expiration: EXPIRATION_INTERVAL
+  hash_key :next_proxy_id, expiration: EXPIRATION_INTERVAL
+  hash_key :next_proxy_timestamp, expiration: EXPIRATION_INTERVAL
 
   def initialize(id)
     @id = id
   end
 
   def expiring_keys
-    [next_proxy, next_proxy_available]
+    [next_proxy_id, next_proxy_timestamp]
   end
 
   def valid?
@@ -29,26 +29,28 @@ class Client
     expiring_keys.each { |k| k.delete(site.id) }
   end
 
-  def reserve_proxy(site, proxy_id)
-    next_proxy[site.id] = proxy_id
-    next_proxy_available[site.id] = Time.now.to_i
+  def reserve_proxy(site, proxy_id, proxy_ts)
+    next_proxy_id[site.id] = proxy_id
+    next_proxy_timestamp[site.id] = proxy_ts
     touch
   end
 
   def get_proxy(site, older_than)
-    reserved_at = next_proxy_available[site.id].andand.to_i
+    proxy_ts = next_proxy_timestamp[site.id].andand.to_i
     # We do not have a proxy reserved for this client/site combination.
     # Find a proxy using the Site methods.
-    if reserved_at.nil?
+    if proxy_ts.nil?
       result = site.select_proxy(older_than)
       # Cache a hot proxy for a later request.
-      reserve_proxy site, result.proxy_id if result.is_a? Proxy::NoColdProxy
+      if result.is_a? Proxy::NoColdProxy
+        reserve_proxy site, result.proxy_id, older_than - result.timeout
+      end
     else
-      remaining_time = reserved_at + older_than - Time.now.to_i
-      proxy_id = next_proxy[site.id]
+      threshold_ts = proxy_ts + older_than
+      proxy_id = next_proxy_id[site.id]
       # Our chached proxy is still too hot
-      if remaining_time > 0
-        result = Proxy::NoColdProxy.new(remaining_time)
+      if threshold_ts > Time.now.to_i
+        result = Proxy::NoColdProxy.new(proxy_ts, threshold_ts, proxy_id)
       # We have a chached proxy ready for use.
       else
         result = Proxy.find proxy_id

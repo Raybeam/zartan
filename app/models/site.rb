@@ -50,7 +50,7 @@ class Site < ActiveRecord::Base
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        Proxy::NoColdProxy.new(proxy_ts - threshold_ts, proxy_id)
+        Proxy::NoColdProxy.new(proxy_ts, threshold_ts, proxy_id)
       else
         touch_proxy(proxy_id)
         Proxy.find(proxy_id)

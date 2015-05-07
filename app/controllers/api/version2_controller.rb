@@ -15,7 +15,7 @@ module Api
     def get_proxy
       check_client_id_and_site do
         older_than = (params[:older_than] || -1).to_i
-        result = @client.select_proxy(@site, older_than)
+        result = @client.get_proxy(@site, older_than)
         if result == Proxy::NoProxy
           render json: Responses::try_again
         elsif result.is_a? Proxy::NoColdProxy
@@ -53,7 +53,7 @@ module Api
         set_site
         yield
       else
-        render json: Responses::Failure('Unrecognized client id')
+        render json: Responses::failure('Unrecognized client id')
       end
     end
   end
