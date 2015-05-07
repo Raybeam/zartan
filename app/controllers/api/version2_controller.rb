@@ -18,7 +18,7 @@ module Api
         result = @client.get_proxy(@site, older_than)
         if result == Proxy::NoProxy
           render json: Responses::try_again
-        elsif result.is_a? Proxy::NoColdProxy
+        elsif result.is_a? Proxy::NotReady
           render json: Responses::try_again(result.timeout)
         else
           render json: Responses::success(result)

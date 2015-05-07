@@ -29,7 +29,7 @@ class Site < ActiveRecord::Base
   #               in the future)
   # Returns:
   #   - a Proxy instance if we found one used long enough ago
-  #   - Proxy::NoColdProxy(timeout) if we found an instance, but it won't be
+  #   - Proxy::NotReady(timeout) if we found an instance, but it won't be
   #     old enough until `timeout` seconds from now
   #   - Proxy::NoProxy if we didn't find any proxies at all
   def select_proxy(older_than=-1)
@@ -50,7 +50,7 @@ class Site < ActiveRecord::Base
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
-        Proxy::NoColdProxy.new(proxy_ts, threshold_ts, proxy_id)
+        Proxy::NotReady.new(proxy_ts, threshold_ts, proxy_id)
       else
         touch_proxy(proxy_id)
         Proxy.find(proxy_id)

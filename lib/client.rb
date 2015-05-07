@@ -32,6 +32,7 @@ class Client
   def reserve_proxy(site, proxy_id, proxy_ts)
     next_proxy_id[site.id] = proxy_id
     next_proxy_timestamp[site.id] = proxy_ts
+    site.touch_proxy proxy_id
     touch
   end
 
@@ -42,15 +43,15 @@ class Client
     if proxy_ts.nil?
       result = site.select_proxy(older_than)
       # Cache a hot proxy for a later request.
-      if result.is_a? Proxy::NoColdProxy
-        reserve_proxy site, result.proxy_id, older_than - result.timeout
+      if result.is_a? Proxy::NotReady
+        reserve_proxy site, result.proxy_id, result.proxy_ts
       end
     else
-      threshold_ts = proxy_ts + older_than
+      threshold_ts = Time.now.to_i - older_than
       proxy_id = next_proxy_id[site.id]
       # Our chached proxy is still too hot
-      if threshold_ts > Time.now.to_i
-        result = Proxy::NoColdProxy.new(proxy_ts, threshold_ts, proxy_id)
+      if proxy_ts > threshold_ts
+        result = Proxy::NotReady.new(proxy_ts, threshold_ts, proxy_id)
       # We have a chached proxy ready for use.
       else
         result = Proxy.find proxy_id
