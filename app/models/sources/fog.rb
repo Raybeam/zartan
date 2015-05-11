@@ -51,6 +51,7 @@ module Sources
     def decommission_proxy(proxy)
       server = server_by_proxy proxy
       server.destroy
+      Activity << "Decommissioned proxy #{proxy.host} (#{server.name})"
     end
 
     # find_orphaned_servers!(site)
@@ -63,10 +64,10 @@ module Sources
       num_servers_found = 0
       connection.servers.each do |server|
         if server_is_proxy_type?(server) \
-          && server.ready? \
-          && !Proxy.active.where(:host => server.public_ip_address).exists? \
-
+            && server.ready? \
+            && !Proxy.active.where(:host => server.public_ip_address).exists?
           save_server server, *args
+          Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site #{site.name}"
           num_servers_found += 1
         end
       end
@@ -133,12 +134,15 @@ module Sources
       # Only wait for server_ready_timeout seconds
       if server.wait_for(server_ready_timeout) { ready? }
         save_server server, site
+        Activity << "Got new proxy #{server.public_ip_address} (#{server.name}) for site #{site.name}"
       else
+        Activity << "Requested new proxy for site #{site.name} but timed out waiting for #{server.name} to be provisioned"
         add_error("Timed out when creating #{server.name}")
       end
     rescue => e
       # Since this is within a thread we do not want one thread to kill
       # all the child threads.  Log the error in redis
+      Activity << "Failed to get a new proxy for #{site.name} due to #{e.inspect}"
       add_error "#{e.inspect}\n#{e.backtrace.join("\n")}"
     end
 
