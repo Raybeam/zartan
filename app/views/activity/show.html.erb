@@ -1,0 +1,13 @@
+<div class="page-header">
+  <h1>Recent Activity</h1>
+</div>
+
+<table class="table table-striped">
+  <tbody>
+    <% Activity.each do |event| %>
+      <tr>
+        <td><%= event %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

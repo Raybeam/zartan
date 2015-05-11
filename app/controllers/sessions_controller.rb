@@ -7,7 +7,7 @@ class SessionsController < ApplicationController
       user = User.from_omniauth(env["omniauth.auth"])
       session[:user_id] = user.id
       flash[:notice] = "Welcome #{user.name}, you have now been verified!"
-      redirect_to sites_path
+      redirect_to activity_path
     else
       flash[:warning] = "You must be an employee to access Zartan."
       redirect_to root_path

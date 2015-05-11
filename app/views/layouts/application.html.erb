@@ -14,6 +14,7 @@
     <% if current_user %>
       <%= nav_bar brand: 'Zartan', static: :top, responsive: true do %>
         <%= menu_group do %>
+          <%= menu_item "Activity", activity_path %>
           <%= menu_item "Sites", sites_path %>
           <%= menu_item "Sources", sources_path %>
           <%= menu_item "Settings", config_path %>

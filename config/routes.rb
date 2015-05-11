@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   end
   
   # Admin UI Routes
+  resource :activity, only: %i(show), controller: :activity
   resources :sites, only: %i(index show update)
   resources :sources, except: %i(destroy) do
     post 'clear_errors', on: :member
