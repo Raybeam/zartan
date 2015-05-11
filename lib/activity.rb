@@ -2,7 +2,7 @@ class Activity
   LOCK = Redis::Lock.new('activity_lock', expiration: 10.seconds, timeout: 12.seconds)
   
   def initialize
-    @list = Redis::List.new('activity', maxlength: Zartan::Config.new['max_activity_items'])
+    @list = Redis::List.new('activity', maxlength: Zartan::Config.new['max_activity_items'].to_i)
   end
   
   def <<(event)
@@ -13,7 +13,7 @@ class Activity
   end
   
   def each(&block)
-    @list.values.reverse.each(&:block)
+    @list.values.reverse.each(&block)
   end
   
   class << self

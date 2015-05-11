@@ -67,7 +67,7 @@ module Sources
             && server.ready? \
             && !Proxy.active.where(:host => server.public_ip_address).exists?
           save_server server, *args
-          Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site #{site.name}"
+          Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
           num_servers_found += 1
         end
       end

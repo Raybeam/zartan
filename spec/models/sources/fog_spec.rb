@@ -23,7 +23,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
   context '#decommission_proxy' do
     it 'decommisions a proxy' do
-      server = double(:destroy => double)
+      server = double(:destroy => double, :name => 'Phil')
       expect(source).to receive(:server_by_proxy).and_return(server)
 
       source.decommission_proxy(proxy)
@@ -40,13 +40,13 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
   context '#find_orphaned_servers!' do
     before :each do
-      @server = double
+      @server = double(:name => "Beatrice")
       connection = double(:servers => [@server])
       expect(source).to receive(:connection).and_return(connection)
     end
 
     it 'finds a server missing from the database' do
-      expect(@server).to receive(:public_ip_address).and_return('N/A')
+      allow(@server).to receive(:public_ip_address).and_return('N/A')
       expect(@server).to receive(:ready?).and_return(true)
       expect(source).to receive(:server_is_proxy_type?).and_return(true)
       expect(source).to receive(:save_server)
@@ -132,7 +132,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
 
     it 'saves a properly created server' do
-      server = double(:wait_for => double)
+      server = double(:wait_for => double, :public_ip_address => 'N/A', :name => 'Tim')
       expect(source).to receive(:server_ready_timeout)
       expect(source).to receive(:create_server).and_return(server)
       expect(source).to receive(:save_server)
