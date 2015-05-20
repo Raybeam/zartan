@@ -70,8 +70,14 @@ module Sources
         if server_is_proxy_type?(server) \
             && server.ready? \
             && !Proxy.active.where(:host => server.public_ip_address).exists?
-          save_server server, *args
-          Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
+
+          # An "orphaned" server can be in the middle of a decommission.
+          # We still need to count it so that we don't try to create more
+          # servers than the source's max.
+          unless recent_decommissions.include? server.name
+            save_server server, *args
+            Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
+          end
           num_servers_found += 1
         end
       end
@@ -163,9 +169,7 @@ module Sources
     # Parameters:
     #   site - What site to add the found servers to (if any)
     def save_server(server, *args)
-      unless recent_decommissions.include? server.name
-        add_proxy(server.public_ip_address, config['proxy_port'], *args)
-      end
+      add_proxy(server.public_ip_address, config['proxy_port'], *args)
     end
   end
 end

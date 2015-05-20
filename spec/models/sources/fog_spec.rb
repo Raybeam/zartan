@@ -80,6 +80,16 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
       expect(source.find_orphaned_servers!).to eq 0
     end
+
+    it "does not save the server if it's pending decommission" do
+      source.recent_decommissions << @server.name
+      allow(@server).to receive(:public_ip_address).and_return('N/A')
+      expect(@server).to receive(:ready?).and_return(true)
+      expect(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(source).to receive(:save_server).never
+
+      expect(source.find_orphaned_servers!).to eq 1
+    end
   end
 
   context '#num_servers_building' do
@@ -166,21 +176,6 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:add_error)
 
       source.send(:provision_proxy, site)
-    end
-  end
-
-  context '#save_server' do
-    it "saves the server if the proxy isn't pending decommission" do
-      server = double(:name => "good_proxy", :public_ip_address => 'localhost')
-      expect(source).to receive(:add_proxy)
-      source.send(:save_server, server)
-    end
-
-    it 'saves the server if the proxy is pending decommission' do
-      server = double(:name => "bad_proxy")
-      source.recent_decommissions << "bad_proxy"
-      expect(source).to receive(:add_proxy).never
-      source.send(:save_server, server)
     end
   end
 end
