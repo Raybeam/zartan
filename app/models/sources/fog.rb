@@ -2,6 +2,10 @@
 module Sources
   class Fog < Source
 
+    FOG_RECENT_DECOMMISSIONS_LENGTH = \
+      REDIS_CONFIG.fetch('fog_recent_decommissions_length', 500)
+    list :recent_decommissions, :maxlength => FOG_RECENT_DECOMMISSIONS_LENGTH
+
     class << self
       # This should still be overwritten by child classes of Fog with
       # super.merge{...}
@@ -84,6 +88,14 @@ module Sources
       end
     end
 
+    # The given proxy will be decommissioned by a future resque queue.
+    # Mark the server's name in recent_decommissions so that it isn't marked
+    # as an "orphaned" proxy
+    def pending_decommission(proxy)
+      server = server_by_proxy(proxy)
+      recent_decommissions << server.name
+    end
+
     protected
 
     # server_is_proxy_type?(server)
@@ -151,7 +163,9 @@ module Sources
     # Parameters:
     #   site - What site to add the found servers to (if any)
     def save_server(server, *args)
-      add_proxy(server.public_ip_address, config['proxy_port'], *args)
+      unless recent_decommissions.include? server.name
+        add_proxy(server.public_ip_address, config['proxy_port'], *args)
+      end
     end
   end
 end

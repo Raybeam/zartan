@@ -102,6 +102,26 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
   end
 
+  context '#pending_decommission', redis:true do
+    it 'stores a finite number of server names pending deletion' do
+      expect(source).to receive(:server_by_proxy).and_return(
+        double(:name => "very_old_proxy")
+      )
+      source.pending_decommission double('very_old_proxy')
+      # byebug
+      expect(source.recent_decommissions.include? "very_old_proxy").
+        to be_truthy
+      Sources::Fog::FOG_RECENT_DECOMMISSIONS_LENGTH.times do |i|
+        expect(source).to receive(:server_by_proxy).and_return(
+          double(:name => "proxy-#{i}")
+        )
+        source.pending_decommission double("proxy-#{i}")
+      end
+      expect(source.recent_decommissions.include? "very_old_proxy").
+        to be_falsey
+    end
+  end
+
   context '#server_ready_timeout' do
     it 'uses the environment timeout' do
       redis = Zartan::Redis.connect
@@ -146,6 +166,21 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:add_error)
 
       source.send(:provision_proxy, site)
+    end
+  end
+
+  context '#save_server' do
+    it "saves the server if the proxy isn't pending decommission" do
+      server = double(:name => "good_proxy", :public_ip_address => 'localhost')
+      expect(source).to receive(:add_proxy)
+      source.send(:save_server, server)
+    end
+
+    it 'saves the server if the proxy is pending decommission' do
+      server = double(:name => "bad_proxy")
+      source.recent_decommissions << "bad_proxy"
+      expect(source).to receive(:add_proxy).never
+      source.send(:save_server, server)
     end
   end
 end

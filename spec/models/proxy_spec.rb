@@ -116,6 +116,10 @@ RSpec.describe Proxy, type: :model do
   end
 
   context '#queue_decommission' do
+    before :each do
+      allow(proxy.source).to receive(:pending_decommission)
+    end
+
     it 'does nothing if there remain sites using the proxy' do
       expect(proxy).to receive(:no_sites?).and_return(false)
       expect(Resque).to receive(:enqueue).never
