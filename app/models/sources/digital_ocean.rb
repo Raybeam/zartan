@@ -119,8 +119,9 @@ module Sources
     end
 
     def create_server
+      timestamp = Time.now.strftime("%Y.%m.%d-%H.%M.%S")
       connection.servers.create(
-        name: "proxy-#{SecureRandom.uuid}",
+        name: "proxy-#{timestamp}-#{SecureRandom.uuid}",
         image_id: image_id,
         flavor_id: flavor_id,
         region_id: region_id
