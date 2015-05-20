@@ -25,6 +25,7 @@ class Proxy < ActiveRecord::Base
 
   def queue_decommission
     if self.no_sites?
+      source.pending_decommission(self)
       Resque.enqueue_to(self.source.class.queue, Jobs::DecommissionProxy, self.id)
     end
   end

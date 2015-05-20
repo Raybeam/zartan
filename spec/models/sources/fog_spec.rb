@@ -80,6 +80,16 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
       expect(source.find_orphaned_servers!).to eq 0
     end
+
+    it "does not save the server if it's pending decommission" do
+      source.recent_decommissions << @server.name
+      allow(@server).to receive(:public_ip_address).and_return('N/A')
+      expect(@server).to receive(:ready?).and_return(true)
+      expect(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(source).to receive(:save_server).never
+
+      expect(source.find_orphaned_servers!).to eq 1
+    end
   end
 
   context '#num_servers_building' do
@@ -99,6 +109,26 @@ RSpec.describe Sources::DigitalOcean, type: :model do
         and_return(false)
 
       expect(source.send(:num_servers_building)).to eq 1
+    end
+  end
+
+  context '#pending_decommission', redis:true do
+    it 'stores a finite number of server names pending deletion' do
+      expect(source).to receive(:server_by_proxy).and_return(
+        double(:name => "very_old_proxy")
+      )
+      source.pending_decommission double('very_old_proxy')
+      # byebug
+      expect(source.recent_decommissions.include? "very_old_proxy").
+        to be_truthy
+      Sources::Fog::FOG_RECENT_DECOMMISSIONS_LENGTH.times do |i|
+        expect(source).to receive(:server_by_proxy).and_return(
+          double(:name => "proxy-#{i}")
+        )
+        source.pending_decommission double("proxy-#{i}")
+      end
+      expect(source.recent_decommissions.include? "very_old_proxy").
+        to be_falsey
     end
   end
 

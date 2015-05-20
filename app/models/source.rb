@@ -78,6 +78,12 @@ class Source < ActiveRecord::Base
     [self.max_proxies, self.proxies.active.length + num_requested].min
   end
 
+  # The given proxy will be decommissioned by a future resque queue.
+  # Entry point for child classes to note that a proxy's server is about
+  # to be decommissioned.
+  def pending_decommission(proxy)
+  end
+
   protected
 
   # Helper method for child classes to use to add a new proxy to the database

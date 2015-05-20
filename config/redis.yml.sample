@@ -1,5 +1,6 @@
 default: &default
   client_session_timeout: 300
+  fog_recent_decommissions_length: 500
 development:
   <<: *default
   host: localhost

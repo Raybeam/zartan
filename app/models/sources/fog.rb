@@ -2,6 +2,10 @@
 module Sources
   class Fog < Source
 
+    FOG_RECENT_DECOMMISSIONS_LENGTH = \
+      REDIS_CONFIG.fetch('fog_recent_decommissions_length', 500)
+    list :recent_decommissions, :maxlength => FOG_RECENT_DECOMMISSIONS_LENGTH
+
     class << self
       # This should still be overwritten by child classes of Fog with
       # super.merge{...}
@@ -66,8 +70,14 @@ module Sources
         if server_is_proxy_type?(server) \
             && server.ready? \
             && !Proxy.active.where(:host => server.public_ip_address).exists?
-          save_server server, *args
-          Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
+
+          # An "orphaned" server can be in the middle of a decommission.
+          # We still need to count it so that we don't try to create more
+          # servers than the source's max.
+          unless recent_decommissions.include? server.name
+            save_server server, *args
+            Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
+          end
           num_servers_found += 1
         end
       end
@@ -82,6 +92,14 @@ module Sources
         sum += 1 if server_is_proxy_type?(server) && !server.ready?
         sum
       end
+    end
+
+    # The given proxy will be decommissioned by a future resque queue.
+    # Mark the server's name in recent_decommissions so that it isn't marked
+    # as an "orphaned" proxy
+    def pending_decommission(proxy)
+      server = server_by_proxy(proxy)
+      recent_decommissions << server.name
     end
 
     protected
