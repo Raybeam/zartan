@@ -271,6 +271,27 @@ RSpec.describe Site, type: :model do
       end
     end
 
+    context '#proxy_too_old?' do
+      it 'identifies new proxies' do
+        now = Time.now.to_i
+        @redis.zadd( site.proxy_pool.key, now, proxy.id )
+
+        expect(site.send(:proxy_too_old?, proxy)).to be_falsey
+      end
+
+      it 'identifies old proxies' do
+        now = Time.now.to_i - site.send(:proxy_age_timeout) - 1
+        @redis.zadd( site.proxy_pool.key, now, proxy.id )
+
+        expect(site.send(:proxy_too_old?, proxy)).to be_truthy
+      end
+
+      it 'treats untouched proxies as new' do
+        @redis.zadd( site.proxy_pool.key, 0, proxy.id )
+
+        expect(site.send(:proxy_too_old?, proxy)).to be_falsey
+      end
+    end
   end
 
   describe 'PerformanceReport' do
@@ -374,15 +395,6 @@ RSpec.describe Site, type: :model do
         expect(site).to receive(:large_enough_sample?).never
 
         site.send(:disable_proxy_if_bad, proxy, {trust_sample_size: true})
-      end
-    end
-
-    context "Proxy is too old" do
-      before(:each) do
-        expect(site).to receive(:proxy_too_old?).and_return(true)
-        expect(site).to receive(:forget_proxy)
-
-        site.send(:disable_proxy_if_bad, proxy)
       end
     end
   end
