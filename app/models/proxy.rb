@@ -19,6 +19,9 @@ class Proxy < ActiveRecord::Base
       proxy = self.find_or_initialize_by(host: host, port: port)
       proxy.source = nil
       proxy.deleted_at = nil
+      proxy.proxy_performances.each do |pp|
+        pp.destroy()
+      end
       proxy
     end
   end

@@ -221,7 +221,8 @@ class Site < ActiveRecord::Base
   end
 
   def proxy_too_old?(proxy)
-    return proxy_pool[proxy.id].to_i < Time.now.to_i - proxy_age_timeout
+    proxy_ts = proxy_pool[proxy.id].to_i
+    return proxy_ts < Time.now.to_i - proxy_age_timeout && proxy_ts != 0
   end
 
   # large_enough_sample?()
