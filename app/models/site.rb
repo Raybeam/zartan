@@ -4,6 +4,8 @@ class Site < ActiveRecord::Base
   has_many :proxy_performances, dependent: :destroy, inverse_of: :site
   has_many :proxies, through: :proxy_performances
 
+  include ApiLogging
+
   # Redis-backed properties
   include Redis::Objects
   sorted_set :proxy_pool
@@ -46,10 +48,12 @@ class Site < ActiveRecord::Base
         # We didn't find a proxy
         # Enqueue the performance analyzer for the site so that we may have
         # a proxy by the time the client requests a proxy again.
+        api_log(event: 'no_proxies', site: self.name)
         Resque.enqueue(Jobs::SitePerformanceAnalyzer, self.id)
         Proxy::NoProxy
       elsif proxy_ts > threshold_ts
         # The proxy we found was too recently used.
+        api_log(event: 'no_proxy_ready', site: self.name, lru_proxy_unix_time: proxy_ts, threshold_unix_time: threshold_ts)
         Proxy::NotReady.new(proxy_ts, threshold_ts, proxy_id)
       else
         touch_proxy(proxy_id)
@@ -152,7 +156,11 @@ class Site < ActiveRecord::Base
   end
 
   def touch_proxy(proxy_id)
-    proxy_pool[proxy_id] = Time.now.to_i unless proxy_id.nil?
+    unless proxy_id.nil?
+      ts = Time.now.to_i
+      api_log(event: 'touch_proxy', site: self.name, unix_time: ts)
+      proxy_pool[proxy_id] = ts
+    end
   end
 
   private
