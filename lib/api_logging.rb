@@ -1,4 +1,4 @@
-class ApiLogging
+module ApiLogging
   extend ActiveSupport::Concern
   
   API_LOGGER = ActiveSupport::TaggedLogging.new(Rails.logger)
