@@ -50,7 +50,7 @@ class Source < ActiveRecord::Base
   # Parameters:
   #   num_proxies - How many proxies to create
   #   site - what site to add the proxies to after they're created
-  def provision_proxies(num_proxies, site)
+  def provision_proxies(desired_proxy_count, site)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 

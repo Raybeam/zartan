@@ -69,9 +69,9 @@ RSpec.describe Client, redis:true do
       expect(result.id).to eq proxy.id
 
       # Check to make sure the reservation has been removed
-      not_a_proxy = double
-      expect(site).to receive(:select_proxy).and_return(not_a_proxy)
-      expect(client.get_proxy(site,0)).to be not_a_proxy
+      a_different_proxy = double('a_different_proxy', id: nil)
+      expect(site).to receive(:select_proxy).and_return(a_different_proxy)
+      expect(client.get_proxy(site,0)).to be a_different_proxy
     end
   end
 end
