@@ -158,7 +158,7 @@ class Site < ActiveRecord::Base
   def touch_proxy(proxy_id)
     unless proxy_id.nil?
       ts = Time.now.to_i
-      api_log(event: 'touch_proxy', site: self.name, unix_time: ts)
+      api_log(event: 'touch_proxy', site: self.name, proxy_id: proxy_id, unix_time: ts)
       proxy_pool[proxy_id] = ts
     end
   end
