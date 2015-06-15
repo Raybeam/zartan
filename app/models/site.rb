@@ -86,6 +86,7 @@ class Site < ActiveRecord::Base
 
   def proxy_succeeded!(proxy)
     return unless active_performance? proxy
+    api_log(event: 'proxy_succeeded', site: self.name, proxy_id: proxy.id)
     proxy_pool_lock.lock do
       touch_proxy(proxy.id)
       proxy_successes.increment(proxy.id)
@@ -95,6 +96,7 @@ class Site < ActiveRecord::Base
   def proxy_failed!(proxy)
     return unless active_performance? proxy
     num_failures = 0
+    api_log(event: 'proxy_failed', site: self.name, proxy_id: proxy.id)
     proxy_pool_lock.lock do
       touch_proxy(proxy.id)
       num_failures = proxy_failures.increment(proxy.id)
