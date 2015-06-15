@@ -5,7 +5,11 @@ module ApiLogging
   
   def api_log(record={})
     tm = Time.now
-    record.merge!(timestamp: tm.strftime('%F %T'), unix_time: tm.to_i)
+    record.merge!(
+      thread: Thread.current.object_id,
+      timestamp: tm.strftime('%F %T'),
+      unix_time: tm.to_i
+    )
     ::ApiLogging::API_LOGGER.tagged('api') { |l| l.info(record.to_json) }
   end
 end
