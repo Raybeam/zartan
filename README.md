@@ -24,6 +24,11 @@ service.
 
 # API Usage
 
+See https://github.com/Raybeam/zartan-client.
+
+If you don't want to or cannot use the gem, then below is a detailed explnation
+of the API.
+
 ## Authentication
 In order to receive a proxy you must authenticate with the system.
 Successful authentication returns a client_id which is used for all other API calls.

@@ -6,10 +6,6 @@ Rails.application.routes.draw do
   # API Routes
   # The constraint is necessary to ensure that :site_name can contain dots
   constraints site_name: %r{[a-z0-9_.-]+} do
-    get  'v1/:site_name',                     to: 'api/version1#get_proxy'
-    post 'v1/:site_name/:proxy_id/succeeded', to: 'api/version1#report_result', succeeded: true
-    post 'v1/:site_name/:proxy_id/failed',    to: 'api/version1#report_result', succeeded: false
-
     get  'v2/authenticate',                          to: 'api/version2#authenticate'
     get  'v2/proxy_for/:site_name',                  to: 'api/version2#get_proxy'
     post 'v2/report/:site_name/:proxy_id/succeeded', to: 'api/version2#report_result', succeeded: true
