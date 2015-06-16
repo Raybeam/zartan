@@ -32,7 +32,6 @@ class Client
   def reserve_proxy(site, proxy_id, proxy_ts)
     next_proxy_id[site.id] = proxy_id
     next_proxy_timestamp[site.id] = proxy_ts
-    site.touch_proxy proxy_id
     touch
   end
 
