@@ -40,9 +40,9 @@ RSpec.describe Sources::DigitalOcean, type: :model do
 
   context '#find_orphaned_servers!' do
     before :each do
-      @server = double(:name => "Beatrice")
-      connection = double(:servers => [@server])
-      expect(source).to receive(:connection).and_return(connection)
+      @server = double('server', :name => "Beatrice")
+      @connection = double(:servers => [@server])
+      expect(source).to receive(:connection).and_return(@connection)
     end
 
     it 'finds a server missing from the database' do
@@ -86,7 +86,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
     end
 
     it "does not save the server if it's pending decommission" do
-      source.recent_decommissions << @server.name
+      allow(source).to receive(:recent_decommissions).and_return([@server.name])
       allow(@server).to receive(:public_ip_address).and_return('N/A')
       expect(@server).to receive(:ready?).and_return(true)
       expect(source).to receive(:server_is_proxy_type?).and_return(true)
@@ -94,6 +94,39 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:schedule_orphan_search)
 
       source.find_orphaned_servers! desired_proxy_count:1
+    end
+
+    it "requeues itself if at least one server is still building" do
+      expect(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(@server).to receive(:ready?).and_return(false)
+      expect(source).to receive(:schedule_orphan_search)
+
+      source.find_orphaned_servers! desired_proxy_count:0
+    end
+
+    it "does nothing if there are no missing servers" do
+      expect(source).to receive(:server_is_proxy_type?).and_return(false)
+      expect(source).to receive(:schedule_orphan_search).never
+
+      source.find_orphaned_servers! desired_proxy_count:0
+    end
+
+    it "only adds servers to site until a desired proxy count" do
+      siteless_server = double('siteless_server',
+        :name => "Gertrude",
+        :public_ip_address => 'foo',
+        :ready? => true
+      )
+      allow(@connection).to receive(:servers).and_return([@server,siteless_server])
+      site = double('site')
+      allow(@server).to receive(:public_ip_address).and_return('N/A')
+      allow(@server).to receive(:ready?).and_return(true)
+      allow(source).to receive(:server_is_proxy_type?).and_return(true)
+      expect(source).to receive(:save_server).with(@server, site)
+      expect(source).to receive(:save_server).with(siteless_server, Source::NoSite)
+      expect(source).to receive(:schedule_orphan_search).never
+
+      source.find_orphaned_servers! site:site, desired_proxy_count:1
     end
   end
 

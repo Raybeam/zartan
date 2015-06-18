@@ -1,7 +1,7 @@
 module Jobs
   class ProvisionProxies
     class << self
-      def perform(source_id, site_id, desired_proxy_count)
+      def perform(site_id, source_id, desired_proxy_count)
         source = Source.find source_id
         if desired_proxy_count > source.proxies.active.length
           site = Site.find site_id
