@@ -49,7 +49,7 @@ class Client
       if result.is_a? Proxy::NotReady
         # Cache a hot proxy for a later request.
         reserve_proxy site, result.proxy_id, result.proxy_ts
-      else
+      elsif result.is_a? Proxy
         api_log(event: 'found_proxy', client_id: self.id, site: site.name, proxy_id: result.id)
       end
     else
