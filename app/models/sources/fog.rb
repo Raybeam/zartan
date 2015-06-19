@@ -66,10 +66,7 @@ module Sources
     #   site - What site to add the found servers to (if any)
     #   desired_proxy_count - Until the site owns this many proxies, add new
     #     proxies to site
-    def find_orphaned_servers!(
-      site: NoSite,
-      desired_proxy_count: self.max_proxies
-    )
+    def find_orphaned_servers!(site: NoSite, desired_proxy_count: self.max_proxies)
       total_known_proxies = proxies.active.length
       servers_still_building = false
       connection.servers.each do |server|
@@ -79,16 +76,16 @@ module Sources
           elsif !Proxy.active.where(:host => server.public_ip_address).exists? \
             && !recent_decommissions.include?(server.name)
 
+            # Don't add found proxies to the site if we've already reached our
+            # quota
+            total_known_proxies += 1
+            site = NoSite if total_known_proxies > desired_proxy_count
+
             save_server server, site
 
             msg = "Found orphaned proxy #{server.public_ip_address} (#{server.name})"
             msg += " for site #{site.name}" if site.respond_to? 'name'
             Activity << msg
-
-            total_known_proxies += 1
-            # Don't add found proxies to the site if we've already reached our
-            # quota
-            site = NoSite if total_known_proxies >= desired_proxy_count
           end
         end
       end
