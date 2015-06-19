@@ -155,9 +155,9 @@ module Sources
       Resque.enqueue_in_with_queue(
         self.class.queue,
         server_ready_timeout,
-        Jobs::FindOrphanedServers,
-        self.id,
+        Jobs::ProvisionProxies,
         site_id,
+        self.id,
         desired_proxy_count
       )
     end

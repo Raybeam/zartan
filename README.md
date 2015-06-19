@@ -175,9 +175,6 @@ config/default_settings.yml.
   - Each proxy is periodically evaluated for its ability to be used on each
   site.  If the success_count/(success_count+failure_count) is less than this
   number, then the proxy may be decommissioned.
-- default_retry_interval
-  - How long to tell clients to wait for proxies to be created when we have
-  none.
 - server_retry_timeout
   - How long to wait for newly provisioned proxies to be ready before giving up.
   - These proxies aren't lost forever.  They can be reclaimed by the system
