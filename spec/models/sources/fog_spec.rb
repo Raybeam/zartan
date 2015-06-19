@@ -123,7 +123,7 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       allow(@server).to receive(:ready?).and_return(true)
       allow(source).to receive(:server_is_proxy_type?).and_return(true)
       expect(source).to receive(:save_server).with(@server, site)
-      expect(source).to receive(:save_server).with(siteless_server, Source::NoSite)
+      expect(source).to receive(:save_server).with(siteless_server, Site::NoSite)
       expect(source).to receive(:schedule_orphan_search).never
 
       source.find_orphaned_servers! site:site, desired_proxy_count:1

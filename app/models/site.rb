@@ -21,6 +21,13 @@ class Site < ActiveRecord::Base
   end
   ProxyInfo = Struct.new(:proxy_id, :proxy_ts)
 
+  # Dummy class used to add proxies to the database without adding them to a
+  # site
+  class NoSite
+    def self.add_proxies(*args)
+    end
+  end
+
   # select_proxy()
   # select_proxy(older_than)
   # Find a suitable proxy for scraping this site.
