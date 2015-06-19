@@ -17,13 +17,6 @@ class Source < ActiveRecord::Base
     end
   end
 
-  # Dummy class used to add proxies to the database without adding them to a
-  # site
-  class NoSite
-    def self.add_proxies(*args)
-    end
-  end
-
   def config
     @config ||= JSON.parse(read_attribute(:config))
   end
@@ -50,7 +43,7 @@ class Source < ActiveRecord::Base
   # Parameters:
   #   num_proxies - How many proxies to create
   #   site - what site to add the proxies to after they're created
-  def provision_proxies(num_proxies, site)
+  def provision_proxies(desired_proxy_count, site)
     raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
@@ -88,7 +81,7 @@ class Source < ActiveRecord::Base
 
   # Helper method for child classes to use to add a new proxy to the database
   # when the host and port have been created
-  def add_proxy(host, port, site = NoSite)
+  def add_proxy(host, port, site = Site::NoSite)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
     return if fix_source_conflicts(proxy).conflict_exists?

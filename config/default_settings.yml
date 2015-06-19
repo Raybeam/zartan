@@ -1,7 +1,6 @@
 defaults:
   failure_threshold: 5
   success_ratio_threshold: 0.5
-  default_retry_interval: 30
   server_ready_timeout: 60
   proxy_age_timeout_seconds: 1800
   max_activity_items: 100

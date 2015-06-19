@@ -24,28 +24,28 @@ module Sources
       end
     end
 
-    # provision_proxies(num_proxies, site)
+    # provision_proxies(desired_proxy_count, site)
     # Spawn a thread for each proxy we need created
     # Parameters:
-    #   num_proxies - How many proxies to create
+    #   desired_proxy_count - Desired number of proxies owned by this source
+    #     Could be less than self.max_proxies if underperforming compared to
+    #     other sources
     #   site - what site to add the proxies to after they're created
-    def provision_proxies(num_proxies, site)
+    def provision_proxies(desired_proxy_count, site)
       # The config is invalid. The child class logs the error
       return unless validate_config!
-      # Search for servers that were created in a previous call to this method,
-      # but timed out
-      num_proxies -= find_orphaned_servers!(site)
-      # Don't double-count any servers that are still building
-      num_proxies -= num_servers_building
-      threads = num_proxies.times.map do
-        Thread.new {provision_proxy(site)}
+      # Subtract the number of servers we have from the number of proxies we
+      # want
+      num_proxies = desired_proxy_count - number_of_remote_servers
+      num_proxies.times do
+        create_server
       end
-      threads.each(&:join)
-      # If there are orphaned servers at this step then chances are one of the
-      # above threads terminated abnormally, perhaps because of a database
-      # locking issue.
-      # Find the orphaned servers and add them to the site
-      find_orphaned_servers! site
+      # Our recently created servers are probably not ready yet.
+      # Check back later
+      find_orphaned_servers!(
+        site: site,
+        desired_proxy_count: desired_proxy_count
+      )
     end
 
     # decommission_proxy()
@@ -64,32 +64,42 @@ module Sources
     # Adds them to the site if provided
     # Parameters:
     #   site - What site to add the found servers to (if any)
-    def find_orphaned_servers!(*args)
-      num_servers_found = 0
+    #   desired_proxy_count - Until the site owns this many proxies, add new
+    #     proxies to site
+    def find_orphaned_servers!(site: Site::NoSite, desired_proxy_count: self.max_proxies)
+      total_known_proxies = proxies.active.length
+      servers_still_building = false
       connection.servers.each do |server|
-        if server_is_proxy_type?(server) \
-            && server.ready? \
-            && !Proxy.active.where(:host => server.public_ip_address).exists?
+        if server_is_proxy_type?(server)
+          if !server.ready?
+            servers_still_building = true
+          elsif !Proxy.active.where(:host => server.public_ip_address).exists? \
+            && !recent_decommissions.include?(server.name)
 
-          # An "orphaned" server can be in the middle of a decommission.
-          # We still need to count it so that we don't try to create more
-          # servers than the source's max.
-          unless recent_decommissions.include? server.name
-            save_server server, *args
-            Activity << "Found orphaned proxy #{server.public_ip_address} (#{server.name}) for site(s) #{args.map(&:name).join ', '}"
+            # Don't add found proxies to the site if we've already reached our
+            # quota
+            total_known_proxies += 1
+            site = Site::NoSite if total_known_proxies > desired_proxy_count
+
+            save_server server, site
+
+            msg = "Found orphaned proxy #{server.public_ip_address} (#{server.name})"
+            msg += " for site #{site.name}" if site.respond_to? 'name'
+            Activity << msg
           end
-          num_servers_found += 1
         end
       end
-      num_servers_found
+      if total_known_proxies < desired_proxy_count || servers_still_building
+        schedule_orphan_search(site, desired_proxy_count)
+      end
     end
 
-    # num_servers_building()
-    # Searches through the list of servers to find any servers that have been
-    # created, but are not yet active.
-    def num_servers_building
-      connection.servers.inject(0) do |sum,server|
-        sum += 1 if server_is_proxy_type?(server) && !server.ready?
+    # number_of_remote_servers()
+    # Searches through the list of servers to find the total number of servers
+    # owned by this source
+    def number_of_remote_servers
+      connection.servers.inject(0) do |sum, s|
+        sum += 1 if server_is_proxy_type?(s) 
         sum
       end
     end
@@ -137,31 +147,21 @@ module Sources
 
     private
 
+    def schedule_orphan_search(site, desired_proxy_count)
+      site_id = site.respond_to?('id') ? site.id : nil
+      Resque.enqueue_in_with_queue(
+        self.class.queue,
+        server_ready_timeout,
+        Jobs::ProvisionProxies,
+        site_id,
+        self.id,
+        desired_proxy_count
+      )
+    end
+
     # How long to wait for a server to be ready
     def server_ready_timeout
       Zartan::Config.new['server_ready_timeout'].to_i
-    end
-
-    # provision_proxy()
-    # Provision a single proxy on the cloud and add it to site when ready
-    def provision_proxy(site)
-      server = create_server
-
-      # Return If we didn't get a server. The child class logs the error
-      return if server == NoServer
-      # Only wait for server_ready_timeout seconds
-      if server.wait_for(server_ready_timeout) { ready? }
-        save_server server, site
-        Activity << "Got new proxy #{server.public_ip_address} (#{server.name}) for site #{site.name}"
-      else
-        Activity << "Requested new proxy for site #{site.name} but timed out waiting for #{server.name} to be provisioned"
-        add_error("Timed out when creating #{server.name}")
-      end
-    rescue => e
-      # Since this is within a thread we do not want one thread to kill
-      # all the child threads.  Log the error in redis
-      Activity << "Failed to get a new proxy for #{site.name} due to #{e.inspect}"
-      add_error "#{e.inspect}\n#{e.backtrace.join("\n")}"
     end
 
     # save_server()

@@ -14,7 +14,7 @@ module Responses
   def try_again(interval=nil)
     if interval.nil?
       config = Zartan::Config.new
-      interval = config['default_retry_interval'].to_i
+      interval = config['server_ready_timeout'].to_i
     end
     
     { result: 'please_retry', interval: interval }
