@@ -13,7 +13,7 @@
 ZARTAN_ROOT=/var/www/zartan
 USER=zartan
 
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/home/$USER/.rvm/wrappers/ruby-2.2.0/
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/home/$USER/.rvm/wrappers/ruby-2.2.0@zartan
 
 DAEMON=bundle
 DAEMON_OPTS="exec rake resque:scheduler"
