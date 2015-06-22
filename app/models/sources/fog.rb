@@ -2,7 +2,7 @@
 module Sources
   class Fog < Source
 
-    include ApiLogging
+    include DetailLogging
 
     FOG_RECENT_DECOMMISSIONS_LENGTH = \
       REDIS_CONFIG.fetch('fog_recent_decommissions_length', 500)
@@ -47,7 +47,7 @@ module Sources
       num_proxies.times do
         create_server
       end
-      api_log('fog',
+      detail_log(self.class.queue,
         event: 'provision_proxies',
         source: self.name,
         site: site.name,
