@@ -6,18 +6,27 @@ RSpec.describe Sources::DigitalOcean, type: :model do
   context '#provision_proxies' do
     it 'provisions multiple proxies, ignoring previously unknown servers' do
       expect(source).to receive(:validate_config!).and_return(true)
-      expect(source).to receive(:create_server).exactly(3).times
+      expect(source).to receive(:create_server).exactly(2).times
       expect(source).to receive(:find_orphaned_servers!)
-      expect(source).to receive(:number_of_remote_servers).and_return(7)
+      expect(source).to receive(:number_of_remote_servers).and_return(source.max_proxies-3)
 
-      source.provision_proxies(10, double)
+      source.provision_proxies(source.max_proxies-1, double('site', name: 'foo'))
     end
 
     it 'does nothing if the config is invalid' do
       expect(source).to receive(:validate_config!).and_return(false)
       expect(source).to receive(:create_server).never
 
-      source.provision_proxies(3, double)
+      source.provision_proxies(source.max_proxies, double)
+    end
+
+    it 'does not try to provision more proxies than the maximum' do
+      expect(source).to receive(:validate_config!).and_return(true)
+      expect(source).to receive(:create_server).exactly(3).times
+      expect(source).to receive(:find_orphaned_servers!)
+      expect(source).to receive(:number_of_remote_servers).and_return(source.max_proxies-3)
+
+      source.provision_proxies(source.max_proxies+1, double('site', name: 'foo'))
     end
   end
 
@@ -109,24 +118,6 @@ RSpec.describe Sources::DigitalOcean, type: :model do
       expect(source).to receive(:schedule_orphan_search).never
 
       source.find_orphaned_servers! desired_proxy_count:0
-    end
-
-    it "only adds servers to site until a desired proxy count" do
-      siteless_server = double('siteless_server',
-        :name => "Gertrude",
-        :public_ip_address => 'foo',
-        :ready? => true
-      )
-      allow(@connection).to receive(:servers).and_return([@server,siteless_server])
-      site = double('site')
-      allow(@server).to receive(:public_ip_address).and_return('N/A')
-      allow(@server).to receive(:ready?).and_return(true)
-      allow(source).to receive(:server_is_proxy_type?).and_return(true)
-      expect(source).to receive(:save_server).with(@server, site)
-      expect(source).to receive(:save_server).with(siteless_server, Site::NoSite)
-      expect(source).to receive(:schedule_orphan_search).never
-
-      source.find_orphaned_servers! site:site, desired_proxy_count:1
     end
   end
 

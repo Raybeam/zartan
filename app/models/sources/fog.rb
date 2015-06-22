@@ -91,10 +91,7 @@ module Sources
           elsif !Proxy.active.where(:host => server.public_ip_address).exists? \
             && !recent_decommissions.include?(server.name)
 
-            # Don't add found proxies to the site if we've already reached our
-            # quota
             total_known_proxies += 1
-            site = Site::NoSite if total_known_proxies > desired_proxy_count
 
             save_server server, site
 
