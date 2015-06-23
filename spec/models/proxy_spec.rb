@@ -25,13 +25,13 @@ RSpec.describe Proxy, type: :model do
 
     it 'is in the list of active Proxies' do
       proxy.save
-      expect(Proxy.active.length).to eq 1
+      expect(Proxy.active.count).to eq 1
     end
 
     it 'is not in the list of active Proxies when soft deleted' do
       proxy.soft_delete
       proxy.save
-      expect(Proxy.active.length).to eq 0
+      expect(Proxy.active.count).to eq 0
     end
   end
 

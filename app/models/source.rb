@@ -50,12 +50,12 @@ class Source < ActiveRecord::Base
   # Enqueues a ProvisionProxies job to create up to num_proxies new proxies.
   # Returns the number of new proxies that should be created after the provision
   def enqueue_provision(site:, num_proxies:)
-    return 0 if num_proxies <= 0 || self.proxies.active.length >= self.max_proxies
+    return 0 if num_proxies <= 0 || self.proxies.active.count >= self.max_proxies
     desired_proxy_count = self.desired_proxy_count(num_proxies)
     Resque.enqueue_to(self.class.queue, Jobs::ProvisionProxies,
       site.id, self.id, desired_proxy_count
     )
-    desired_proxy_count - self.proxies.active.length
+    desired_proxy_count - self.proxies.active.count
   end
 
   # Pure virtual function intended for child classes to
@@ -68,7 +68,7 @@ class Source < ActiveRecord::Base
   # return the number of proxies that would exist if up to num_requested
   # proxies were provisioned
   def desired_proxy_count(num_requested)
-    [self.max_proxies, self.proxies.active.length + num_requested].min
+    [self.max_proxies, self.proxies.active.count + num_requested].min
   end
 
   # The given proxy will be decommissioned by a future resque queue.
