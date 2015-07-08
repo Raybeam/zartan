@@ -163,6 +163,23 @@ Source objects with the same API/login credentials, but different regions.
 - region_name
   - This could be `New York 3`, `San Francisco 1`, etc.
 
+#### Joyent
+- Waiting on credentials to confirm configuration requirements. Below are
+  suspected configureation properties used by Joyent
+- proxy_port
+  - What port is exposed for proxy services on the droplet image.
+- username
+  - TBA
+- password
+  - TBA
+- image_name
+  - TBA
+- flavor_name
+  - TBA
+- network_name
+  - TBA
+
+
 If any of the information entered above information is inaccurate
 then warning messages should
 show up on the page for that site shortly after the first proxy is

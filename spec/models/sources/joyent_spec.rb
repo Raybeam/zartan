@@ -121,7 +121,7 @@ RSpec.describe Sources::Joyent, type: :model do
 
       source.send(:names_to_ids)
 
-      Sources::DigitalOcean::ID_TYPES.each_with_index do |id_type, i|
+      Sources::Joyent::ID_TYPES.each_with_index do |id_type, i|
         expect(source.send("#{id_type}_id".to_sym)).to eq i
       end
     end
