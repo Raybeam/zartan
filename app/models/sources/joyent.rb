@@ -7,19 +7,19 @@ module Sources
           password: :password,
           image_name: :string,
           flavor_name: :string,
-          network_name: :string
+          datacenter_name: :string
         })
       end
     end
 
-    ID_TYPES = ['image', 'flavor', 'network']
+    ID_TYPES = ['image', 'flavor', 'datacenter']
 
     # Connect to Joyent to make sure our config is valid
     def validate_config!
       valid = false
       begin
         names_to_ids # Force re-evaluation of ids
-        valid = (!image_id.nil? && !flavor_id.nil? && !network_id.nil?)
+        valid = (!image_id.nil? && !flavor_id.nil? && !datacenter_id.nil?)
       rescue Excon::Errors::Unauthorized => e
         add_error "Invalid credentials"
       end
@@ -33,7 +33,7 @@ module Sources
     def server_is_proxy_type?(server)
       return server.image_id == self.image_id \
         && server.flavor_id == self.flavor_id \
-        && server.network_id == self.network_id
+        && server.datacenter_id == self.datacenter_id
     end
 
     def connection
@@ -59,15 +59,15 @@ module Sources
       class_eval <<-RUBY
         # image_id()
         # flavor_id()
-        # network_id()
-        # Get the image/flavor/network id.
-        # If the id is undefined, translate image/flavor/network name to id by
+        # datacenter_id()
+        # Get the image/flavor/datacenter id.
+        # If the id is undefined, translate image/flavor/datacenter name to id by
         # connecting to Joyent.
         # Returns cached value if already calculated
         # Parameters:
         #   None
         # Returns:
-        #   - a numeric id representing the image/flavor/network on Joyent
+        #   - a numeric id representing the image/flavor/datacenter on Joyent
         #   - nil if not found
         def #{id_type}_id
           key = '#{id_type}_id'
@@ -78,13 +78,13 @@ module Sources
 
         # retrieve_image_id()
         # retrieve_flavor_id()
-        # retrieve_network_id()
-        # Retrieve image/flavor/network id from Joyent
+        # retrieve_datacenter_id()
+        # Retrieve image/flavor/datacenter id from Joyent
         # If the id is not found then adds to the source's persistent error log
         # Parameters:
         #   None
         # Returns:
-        #   - a numeric id representing the image/flavor/network on Joyent
+        #   - a numeric id representing the image/flavor/datacenter on Joyent
         #   - nil if not found
         def retrieve_#{id_type}_id
           name = config['#{id_type}_name']
@@ -109,10 +109,10 @@ module Sources
     def names_to_ids
       config['image_id'] = retrieve_image_id
       config['flavor_id'] = retrieve_flavor_id
-      config['network_id'] = retrieve_network_id
+      config['datacenter_id'] = retrieve_datacenter_id
       unless config['image_id'].nil? \
         || config['flavor_id'].nil? \
-        || config['network_id'].nil?
+        || config['datacenter_id'].nil?
 
         self.save
       end
@@ -133,7 +133,7 @@ module Sources
         name: "proxy-#{timestamp}-#{SecureRandom.uuid}",
         image: image_id,
         flavor: flavor_id,
-        netowkrs: network_id
+        datacenter: datacenter_id
       )
     # Generally get this error when we've hit our limit on # of servers
     rescue Excon::Errors::Forbidden => e
