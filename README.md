@@ -173,11 +173,9 @@ Source objects with the same API/login credentials, but different regions.
 - password
   - TBA
 - image_name
-  - TBA (OS)
+  - Operating system used for the server
 - flavor_name
-  - TBA (no idea yet)
-- network_name
-  - TBA (possibly data center)
+  - Package type 
 
 
 If any of the information entered above information is inaccurate

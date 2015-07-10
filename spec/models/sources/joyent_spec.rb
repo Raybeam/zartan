@@ -10,8 +10,7 @@ RSpec.describe Sources::Joyent, type: :model do
     it 'identifies a valid config' do
       expect(source).to receive(:names_to_ids)
       expect(source).to receive(:image_id).and_return 1
-      expect(source).to receive(:flavor_id).and_return 2
-      expect(source).to receive(:datacenter_id).and_return 3
+      expect(source).to receive(:package_id).and_return 2
 
       expect(source.validate_config!).to be_truthy
     end
@@ -19,8 +18,7 @@ RSpec.describe Sources::Joyent, type: :model do
     it 'identifies an invalid config when an id is nil' do
       expect(source).to receive(:names_to_ids)
       expect(source).to receive(:image_id).and_return 1
-      expect(source).to receive(:flavor_id).and_return 2
-      expect(source).to receive(:datacenter_id).and_return nil
+      expect(source).to receive(:package_id).and_return 2
 
       expect(source.validate_config!).to be_falsey
     end
@@ -37,27 +35,16 @@ RSpec.describe Sources::Joyent, type: :model do
     it 'identifies a server that runs a proxy' do
       server = double(
         image_id: source.config['image_id'],
-        flavor_id: source.config['flavor_id'],
-        datacenter_id: source.config['datacenter_id']
+        package_id: source.config['package_id'],
       )
 
       expect(source.send(:server_is_proxy_type?, server)).to be_truthy
     end
 
-    it 'identifies a server that is in a different datacenter' do
+    it 'identifies a server that has a different package' do
       server = double(
         image_id: source.config['image_id'],
-        flavor_id: source.config['flavor_id'],
-        datacenter_id: nil,
-      )
-      expect(source.send(:server_is_proxy_type?, server)).to be_falsey
-    end
-
-    it 'identifies a server that has a different flavor' do
-      server = double(
-        image_id: source.config['image_id'],
-        flavor_id: nil,
-        datacenter_id: source.config['datacenter_id']
+        package_id: nil
       )
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
@@ -65,8 +52,7 @@ RSpec.describe Sources::Joyent, type: :model do
     it 'identifies a server that has a different image' do
       server = double(
         image_id: nil,
-        flavor_id: source.config['flavor_id'],
-        datacenter_id: source.config['datacenter_id']
+        package_id: source.config['package_id']
       )
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
@@ -117,7 +103,6 @@ RSpec.describe Sources::Joyent, type: :model do
     it 'retrieves ids for all of the ID_TYPES' do
       expect(source).to receive(:retrieve_image_id).and_return(0)
       expect(source).to receive(:retrieve_flavor_id).and_return(1)
-      expect(source).to receive(:retrieve_datacenter_id).and_return(2)
 
       source.send(:names_to_ids)
 
@@ -156,15 +141,6 @@ RSpec.describe Sources::Joyent, type: :model do
 
       expect(source.send(:retrieve_flavor_id)).to eq 2
     end
-
-    it 'transforms datacenter name to id' do
-      datacenter1 = double(:name => 'foo', :id => 1)
-      datacenter2 = double(:name => source.config['datacenter_name'], :id => 2)
-      connection = double(:datacenters => [datacenter1, datacenter2])
-      expect(source).to receive(:connection).and_return(connection)
-
-      expect(source.send(:retrieve_datacenter_id)).to eq 2
-    end
   end
 
   context '#create_server' do
@@ -174,7 +150,6 @@ RSpec.describe Sources::Joyent, type: :model do
       expect(source).to receive(:connection).and_return(connection)
       expect(source).to receive(:image_id).and_return(1)
       expect(source).to receive(:flavor_id).and_return(2)
-      expect(source).to receive(:datacenter_id).and_return(3)
 
       expect(source.send(:create_server)).to be server
     end
