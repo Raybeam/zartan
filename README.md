@@ -1,4 +1,4 @@
-<img src="http://zackhoffman.com/wp-content/uploads/2010/09/z1.jpg">
+<img src="http://zackhoffman.com/wp-content/uploads/2010/09/z1.jpg" style="width: 150px;height: 150px">
 
 # Zartan
 Web UI to create and manage http proxies from one or more sources.
