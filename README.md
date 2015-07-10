@@ -165,6 +165,21 @@ Source objects with the same API/login credentials, but different regions.
 - region_name
   - This could be `New York 3`, `San Francisco 1`, etc.
 
+#### Joyent
+- Waiting on credentials to confirm configuration requirements. Below are
+  suspected configureation properties used by Joyent
+- proxy_port
+  - What port is exposed for proxy services on the droplet image.
+- username
+  - TBA
+- password
+  - TBA
+- image_name
+  - Operating system used for the server
+- flavor_name
+  - Package type
+
+
 If any of the information entered above information is inaccurate
 then warning messages should
 show up on the page for that site shortly after the first proxy is
@@ -436,7 +451,19 @@ specific commands/config files can be adjusted for other production setups.
   uptime of unicorn and resque_pool is small (i.e., that they were restarted by
   the deploy process).
 
-13. Where to go from here
+13. Setting Up proxy images
+
+  The following steps are used to create a new image that contains what is
+  required for the proxies.
+
+  1) Start with an up-to-date Ubuntu image
+  2) Run commad `sudo apt-get install tinyproxy` (install tinyproxy)
+  3) Replace /etc/tinyproxy.conf with a config file that contains a specific IP you want to reach the image from. You may need to modify the User and Group lines near the top of the file, replacing "deploy" with the name of the (non-root) user of the machine you're setting up
+  4) Run command `sudo service tinyproxy restart` (restart tinyproxy)
+  5) From wherever the IP address you entered into the config file in step 3, start up a web browser and configure it to use an HTTP proxy with host {the IP address of the machine you're provisioning} and port 8888. Verify that you can access a few sites via the proxy.
+  6) If everything works, create a snapshot of the instance you just built.
+
+14. Where to go from here
 
   You'll need to create one or more `Source` objects in the admin panel.  Once
   you have a single `Source` you can make your first API request to get a proxy.
