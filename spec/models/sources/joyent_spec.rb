@@ -8,7 +8,6 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#validate_config!' do
     it 'identifies a valid config' do
-      expect(source).to receive(:names_to_ids)
       expect(source).to receive(:image_id).and_return 1
       expect(source).to receive(:package_id).and_return 2
 
@@ -102,7 +101,7 @@ RSpec.describe Sources::Joyent, type: :model do
 
     it 'retrieves ids for all of the ID_TYPES' do
       expect(source).to receive(:retrieve_image_id).and_return(0)
-      expect(source).to receive(:retrieve_flavor_id).and_return(1)
+      expect(source).to receive(:retrieve_package_id).and_return(1)
 
       source.send(:names_to_ids)
 
@@ -117,7 +116,7 @@ RSpec.describe Sources::Joyent, type: :model do
       connection = double(:images => [image1, image2])
       expect(source).to receive(:connection).twice.and_return(connection)
       expect(source).to receive(:add_error).with(
-        "There is no image named #{source.config['image_name']}. " \
+        "There is no image named #{source.config['image_id']}. " \
         "Options are: foo, bar"
       )
 
@@ -126,20 +125,20 @@ RSpec.describe Sources::Joyent, type: :model do
 
     it 'transforms image name to id' do
       image1 = double(:name => 'foo', :id => 1)
-      image2 = double(:name => source.config['image_name'], :id => 2)
+      image2 = double(:name => source.config['image_id'], :id => 2)
       connection = double(:images => [image1, image2])
       expect(source).to receive(:connection).and_return(connection)
 
       expect(source.send(:retrieve_image_id)).to eq 2
     end
 
-    it 'transforms flavor name to id' do
-      flavor1 = double(:name => 'foo', :id => 1)
-      flavor2 = double(:name => source.config['flavor_name'], :id => 2)
-      connection = double(:flavors => [flavor1, flavor2])
+    it 'transforms package name to id' do
+      package1 = double(:name => 'foo', :id => 1)
+      package2 = double(:name => source.config['package_id'], :id => 2)
+      connection = double(:packages => [package1, package2])
       expect(source).to receive(:connection).and_return(connection)
 
-      expect(source.send(:retrieve_flavor_id)).to eq 2
+      expect(source.send(:retrieve_package_id)).to eq 2
     end
   end
 
@@ -149,7 +148,7 @@ RSpec.describe Sources::Joyent, type: :model do
       connection = double(:servers => double(:create => server))
       expect(source).to receive(:connection).and_return(connection)
       expect(source).to receive(:image_id).and_return(1)
-      expect(source).to receive(:flavor_id).and_return(2)
+      expect(source).to receive(:package_id).and_return(2)
 
       expect(source.send(:create_server)).to be server
     end

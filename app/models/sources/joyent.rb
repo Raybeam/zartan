@@ -5,8 +5,9 @@ module Sources
         super.merge({
           username: :string,
           password: :password,
-          image_name: :string,
-          package_name: :string
+          datacenter: :string,
+          image_id: :string,
+          package_id: :string
         })
       end
     end
@@ -17,7 +18,6 @@ module Sources
     def validate_config!
       valid = false
       begin
-        names_to_ids # Force re-evaluation of ids
         valid = (!image_id.nil? && !package_id.nil?)
       rescue Excon::Errors::Unauthorized => e
         add_error "Invalid credentials"
@@ -38,14 +38,15 @@ module Sources
       @connection ||= ::Fog::Compute.new(
         :provider => 'Joyent',
         :joyent_username => config['username'],
-        :joyent_password => config['password']
+        :joyent_password => config['password'],
+        :joyent_url => config['datacenter']
       )
     end
 
     def server_by_proxy(proxy)
       return NoServer unless validate_config!
       server = connection.servers.select do |s|
-        s.public_ip_address == proxy.host
+        s.primary_ip == proxy.host
       end.first
 
       server || NoServer
@@ -72,28 +73,6 @@ module Sources
           names_to_ids
           config[key]
         end
-
-        # retrieve_image_id()
-        # retrieve_package_id()
-        # Retrieve image/package id from Joyent
-        # If the id is not found then adds to the source's persistent error log
-        # Parameters:
-        #   None
-        # Returns:
-        #   - a numeric id representing the image/package on Joyent
-        #   - nil if not found
-        def retrieve_#{id_type}_id
-          name = config['#{id_type}_name']
-          id = connection.#{id_type.pluralize}.select do |i|
-            i.name == name
-          end.first.andand.id
-          if id.nil?
-            names = connection.#{id_type.pluralize}.map(&:name).join(", ")
-            add_error "There is no #{id_type} named \#{name}. " \
-              "Options are: \#{names}"
-          end
-          id
-        end
       RUBY
     end
 
@@ -103,8 +82,8 @@ module Sources
     # Parameters:
     #   None
     def names_to_ids
-      config['image_id'] = retrieve_image_id
-      config['package_id'] = retrieve_package_id
+      config['image_id'] = image_id
+      config['package_id'] = package_id
       unless config['image_id'].nil? \
         || config['package_id'].nil?
 
@@ -114,7 +93,7 @@ module Sources
 
     def create_server
       timestamp = Time.now.strftime("%Y.%m.%d-%H.%M.%S")
-      connection.servers.create(
+      server_output = connection.servers.create(
         name: "proxy-#{timestamp}-#{SecureRandom.uuid}",
         package: package_id,
         image: image_id
