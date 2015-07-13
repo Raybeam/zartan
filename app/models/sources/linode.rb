@@ -32,10 +32,9 @@ module Sources
     # server_is_proxy_type?(server)
     # given a server, determine if it is running a proxy
     def server_is_proxy_type?(server)
-puts server.inspect
       # Fog implenentation does not give access to flavor/image/etc data
       # So doing the most basic of checks here
-      return server.name =~ /linode/
+      return server.name =~ /proxy/
    end
 
     def connection
@@ -91,8 +90,8 @@ puts server.inspect
         #   - nil if not found
         def retrieve_#{id_type}_id
           name = config['#{id_type}_name']
-#puts name
-          case when '#{id_type}' == 'image'
+
+          if '#{id_type}' == 'image'
             id = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }["IMAGEID"]
             add_error "There is no #{id_type} named \#{name}." if id.nil?
           else
@@ -130,7 +129,6 @@ puts server.inspect
       end
     end
 
-#https://gist.github.com/nesquena/1321948
     def create_server
       # Linode restricts name to be no more than 50 chars
       name = "proxy-#{SecureRandom.uuid}"
@@ -151,12 +149,6 @@ puts server.inspect
       # Boot Linode server
       connection.linode_boot server.id, config_id
 
-#      connection.servers.create(
-#        name: name,
-#        image: image_id,
-#        flavor: flavor_id,
-#        data_center: data_center_id
-#      )
     # Generally get this error when we've hit our limit on # of servers
     rescue Excon::Errors::Forbidden => e
       connection.servers.get(server_id).destroy if !server_id.nil?
