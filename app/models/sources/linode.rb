@@ -40,7 +40,7 @@ module Sources
     def connection
       @connection ||= ::Fog::Compute.new(
         :provider => 'Linode',
-        :linode_api_key => config['api_key']# MYo6NwkzgE6eYf9X31hB3pI5uWNMLtLOypNgKCvyQqctpumxYV3Yrs1rAb3DvO2S
+        :linode_api_key => config['api_key']
       )
     end
 
@@ -137,17 +137,16 @@ module Sources
       # Create Linode server
       server_id = connection.linode_create(config['data_center_id'], config['flavor_id'], 1).body['DATA']['LinodeID']
       connection.linode_update server_id, :label => name
-      server = connection.servers.get(server_id)
 
       # Create disks
-      swap_id = connection.linode_disk_create(server.id, "#{name}_swap", "ext4", 256).body['DATA']['DiskID']
-      disk_id = connection.linode_disk_createfromimage(server.id, config['image_id'], "#{name}_main", (flavor.disk*1024)-256, config['root_password'], "").body['DATA']['DISKID']
+      swap_id = connection.linode_disk_create(server_id, "#{name}_swap", "ext4", 256).body['DATA']['DiskID']
+      disk_id = connection.linode_disk_createfromimage(server_id, config['image_id'], "#{name}_main", (flavor.disk*1024)-256, config['root_password'], "").body['DATA']['DISKID']
 
       # Create config
-      config_id = connection.linode_config_create(server.id, config['kernel_id'], name, "#{disk_id},#{swap_id},,,,,,,").body['DATA']['ConfigID']
+      config_id = connection.linode_config_create(server_id, config['kernel_id'], name, "#{disk_id},#{swap_id},,,,,,,").body['DATA']['ConfigID']
 
       # Boot Linode server
-      connection.linode_boot server.id, config_id
+      connection.linode_boot server_id, config_id
 
     # Generally get this error when we've hit our limit on # of servers
     rescue Excon::Errors::Forbidden => e
