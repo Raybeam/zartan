@@ -21,8 +21,8 @@ module Sources
       begin
         names_to_ids # Force re-evaluation of ids
         valid = (!image_id.nil? && !flavor_id.nil? && !kernel_id.nil? && !data_center_id.nil?)
-      rescue Excon::Errors::Unauthorized => e
-        add_error "Invalid credentials"
+      rescue Exception => e
+        add_error(e.message)
       end
       valid
     end
@@ -148,11 +148,6 @@ module Sources
       # Boot Linode server
       connection.linode_boot server_id, config_id
 
-    # Generally get this error when we've hit our limit on # of servers
-    rescue Excon::Errors::Forbidden => e
-      connection.servers.get(server_id).destroy if !server_id.nil?
-      add_error(JSON.parse(e.response.body)['error_message'])
-      NoServer
     rescue Exception => e
       connection.servers.get(server_id).destroy if !server_id.nil?
       add_error(e.message)
