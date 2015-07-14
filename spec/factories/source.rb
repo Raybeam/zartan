@@ -26,11 +26,11 @@ FactoryGirl.define do
 
     after(:build) do |source|
       source.config = {
-        'user' => "proxy-uuid",
+        'username' => "proxy-uuid",
         'password' => "SECRET_TUNNEL",
         'datacenter' => "joyentcloud_test_location",
-        'image_id:' => "proxy_image",
-        'package_id' => "flavor_name"
+        'image_id' => "proxy_image",
+        'package_id' => "flavor_name",
         'proxy_port' => 1337
       }
     end
