@@ -78,36 +78,45 @@ module Sources
         end
 
         # retrieve_image_id()
-        # retrieve_flavor_id()
-        # retrieve_kernel_id()
-        # retrieve_data_center_id()
-        # Retrieve image/flavor/kernel/data center id from Linode
         # If the id is not found then adds to the source's persistent error log
         # Parameters:
         #   None
         # Returns:
-        #   - a numeric id representing the image/flavor/kernel/data center on Linode
+        #   - a numeric id representing the image on Linode
+        #   - nil if not found
+        def retrieve_image_id
+          name = config['image_name']
+
+          img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
+          if img_data.nil?
+            add_error "There is no image named \#{name}."
+          else
+            id = img_data["IMAGEID"]
+          end
+          id
+        end
+
+        # retrieve_flavor_id()
+        # retrieve_kernel_id()
+        # retrieve_data_center_id()
+        # Retrieve flavor/kernel/data center id from Linode
+        # If the id is not found then adds to the source's persistent error log
+        # Parameters:
+        #   None
+        # Returns:
+        #   - a numeric id representing the flavor/kernel/data center on Linode
         #   - nil if not found
         def retrieve_#{id_type}_id
           name = config['#{id_type}_name']
 
-          if '#{id_type}' == 'image'
-            img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
-            if img_data.nil?
-              add_error "There is no #{id_type} named \#{name}."
-            else
-              id = img_data["IMAGEID"]
-            end
-          else
-            id = connection.#{id_type.pluralize}.select do |i|
-              if '#{id_type}' == 'data_center' then i.location == name
-              else i.name == name end
-            end.first.andand.id
-            if id.nil?
-              names = connection.#{id_type.pluralize}.map(&:name).join(", ")
-              add_error "There is no #{id_type} named \#{name}. " \
-                "Options are: \#{names}"
-            end
+          id = connection.#{id_type.pluralize}.select do |i|
+            if '#{id_type}' == 'data_center' then i.location == name
+            else i.name == name end
+          end.first.andand.id
+          if id.nil?
+            names = connection.#{id_type.pluralize}.map(&:name).join(", ")
+            add_error "There is no #{id_type} named \#{name}. " \
+              "Options are: \#{names}"
           end
           id
         end
