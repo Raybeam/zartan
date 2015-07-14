@@ -92,8 +92,12 @@ module Sources
           name = config['#{id_type}_name']
 
           if '#{id_type}' == 'image'
-            id = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }["IMAGEID"]
-            add_error "There is no #{id_type} named \#{name}." if id.nil?
+            img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
+            if img_data.nil?
+              add_error "There is no #{id_type} named \#{name}."
+            else
+              id = img_data["IMAGEID"]
+            end
           else
             id = connection.#{id_type.pluralize}.select do |i|
               if '#{id_type}' == 'data_center' then i.location == name
@@ -147,7 +151,7 @@ module Sources
 
       # Boot Linode server
       connection.linode_boot server_id, config_id
-
+      connection.servers.get(server_id)
     rescue Exception => e
       connection.servers.get(server_id).destroy if !server_id.nil?
       add_error(e.message)
