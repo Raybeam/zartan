@@ -169,13 +169,19 @@ Source objects with the same API/login credentials, but different regions.
 - proxy_port
   - What port is exposed for proxy services on the droplet image.
 - username
-  - TBA
+  - The username used to log into the Joyent Account
 - password
-  - TBA
-- image_name
-  - Operating system used for the server
-- flavor_name
-  - Package type 
+  - The password associated with the Joyent username
+  datacenter
+    The datacenter url you would want to access
+    ex: https://us-west-1.api.joyentcloud.com
+- image_id
+  - The UUID of the image you would like to start
+    ex: e0f6ce96-a5a7-c63e-b5c1-c48c3a7eb5e6
+    note: custom images are only available in its original datacenter
+- package_id
+  - The name of the package/flavor of the server you would like to work on.
+    ex: g3-devtier-0.25-kvm
 
 
 If any of the information entered above information is inaccurate

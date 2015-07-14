@@ -13,14 +13,17 @@ module Sources
     end
 
     # Connect to Joyent to make sure our config is valid
+    # You cannot verify custom images through Fog, but an incorrect image
+    # UUID will cause an error when creating the server.
     def validate_config!
-      valid = false
-      begin
-        valid = (config.has_key?('image_id') && config.has_key?('package_id'))
-      rescue Excon::Errors::Unauthorized => e
-        add_error "Invalid credentials"
+      if !config[:image_id].nil?
+        for connection.flavors.each do |f|
+          if f.name == config[:package_id]
+            return true
+          end
+        end
       end
-      valid
+      return false
     end
 
     private
@@ -28,16 +31,16 @@ module Sources
     # server_is_proxy_type?(server)
     # given a server, determine if it is running a proxy
     def server_is_proxy_type?(server)
-      return server["image"] == config['image_id'] \
-        && server["package"] == config['package_id']
+      return server["image"] == config[:image_id] \
+        && server["package"] == config[:package_id]
     end
 
     def connection
       @connection ||= ::Fog::Compute.new(
         :provider => 'Joyent',
-        :joyent_username => config['username'],
-        :joyent_password => config['password'],
-        :joyent_url => config['datacenter']
+        :joyent_username => config[:username],
+        :joyent_password => config[:password],
+        :joyent_url => config[:datacenter]
       )
     end
 
@@ -54,8 +57,8 @@ module Sources
       timestamp = Time.now.strftime("%Y.%m.%d-%H.%M.%S")
       server_output = connection.servers.create(
         name: "proxy-#{timestamp}-#{SecureRandom.uuid}",
-        package: config['package_id'],
-        image: config['image_id']
+        package: config[:package_id],
+        image: config[:image_id]
       )
     # Generally get this error when we've hit our limit on # of servers
     # but Joyent will produce errors here as well if form data is incorrect

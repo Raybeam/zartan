@@ -8,23 +8,20 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#validate_config!' do
     it 'identifies a valid config' do
-      expect(source).to receive(:image_id).and_return 1
-      expect(source).to receive(:package_id).and_return 2
+      expect(source.config).to have_key('image_id')
+      expect(source.config).to have_key('package_id')
+      expect(source.config['image_id']).to be
+      expect(source.config['package_id']).to be
 
       expect(source.validate_config!).to be_truthy
     end
 
     it 'identifies an invalid config when an id is nil' do
-      expect(source).to receive(:names_to_ids)
-      expect(source).to receive(:image_id).and_return 1
-      expect(source).to receive(:package_id).and_return 2
-
-      expect(source.validate_config!).to be_falsey
-    end
-
-    it 'identifies an invalid config when we fail to connect' do
-      expect(source).to receive(:names_to_ids).
-        and_raise(Excon::Errors::Unauthorized.new('test_error'))
+      expect(source.config).to have_key('image_id')
+      expect(source.config).to have_key('package_id')
+      source.config['package_id'] = nil
+      expect(source.config['image_id']).to be
+      expect(source.config['package_id']).to be_nil
 
       expect(source.validate_config!).to be_falsey
     end
@@ -36,7 +33,7 @@ RSpec.describe Sources::Joyent, type: :model do
         image_id: source.config['image_id'],
         package_id: source.config['package_id'],
       )
-
+      puts(source.methods)
       expect(source.send(:server_is_proxy_type?, server)).to be_truthy
     end
 
@@ -81,64 +78,6 @@ RSpec.describe Sources::Joyent, type: :model do
       connection = double('connection', :servers => [server1, server2])
 
       expect(source.send(:server_by_proxy, proxy)).to be Sources::Fog::NoServer
-    end
-  end
-
-  context 'mapping config names to config ids' do
-    it 'uses the saved id if available' do
-      source.config['image_id'] = 1
-      expect(source).to receive(:names_to_ids).never
-
-      expect(source.image_id).to eq 1
-    end
-
-    it 'translates name to id if the id is not saved' do
-      source.config.delete 'image_id'
-      expect(source).to receive(:names_to_ids) {source.config['image_id'] = 1}
-
-      expect(source.image_id).to eq 1
-    end
-
-    it 'retrieves ids for all of the ID_TYPES' do
-      expect(source).to receive(:retrieve_image_id).and_return(0)
-      expect(source).to receive(:retrieve_package_id).and_return(1)
-
-      source.send(:names_to_ids)
-
-      Sources::Joyent::ID_TYPES.each_with_index do |id_type, i|
-        expect(source.send("#{id_type}_id".to_sym)).to eq i
-      end
-    end
-
-    it 'logs an error if the id could not be retrieved' do
-      image1 = double(:name => 'foo', :id => 1)
-      image2 = double(:name => 'bar', :id => 2)
-      connection = double(:images => [image1, image2])
-      expect(source).to receive(:connection).twice.and_return(connection)
-      expect(source).to receive(:add_error).with(
-        "There is no image named #{source.config['image_id']}. " \
-        "Options are: foo, bar"
-      )
-
-      expect(source.send(:retrieve_image_id)).to be nil
-    end
-
-    it 'transforms image name to id' do
-      image1 = double(:name => 'foo', :id => 1)
-      image2 = double(:name => source.config['image_id'], :id => 2)
-      connection = double(:images => [image1, image2])
-      expect(source).to receive(:connection).and_return(connection)
-
-      expect(source.send(:retrieve_image_id)).to eq 2
-    end
-
-    it 'transforms package name to id' do
-      package1 = double(:name => 'foo', :id => 1)
-      package2 = double(:name => source.config['package_id'], :id => 2)
-      connection = double(:packages => [package1, package2])
-      expect(source).to receive(:connection).and_return(connection)
-
-      expect(source.send(:retrieve_package_id)).to eq 2
     end
   end
 
