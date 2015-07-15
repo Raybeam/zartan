@@ -46,7 +46,7 @@ RSpec.describe Sources::Linode, type: :model do
 
     it 'identifies a server that is not configured as expected' do
       server = double(
-        name: '-5-6-4-12345-1234567890'
+        name: '12-5-6-4-12345-1234567890'
       )
       expect(source.send(:server_is_proxy_type?, server)).to be_falsey
     end
