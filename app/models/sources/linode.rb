@@ -35,10 +35,10 @@ module Sources
       # Linode/Fog does not give access to flavor/image/etc data for a server
       # Parsing it from the proxy name instead
       server_details = parse_proxy_name(server.name)
-      return server_details[:image_id] == self.image_id \
-          && server_details[:flavor_id] == self.flavor_id \
-          && server_details[:kernel_id] == self.kernel_id \
-          && server_details[:data_center_id] == self.data_center_id if !server_details.nil?
+      return server_details.image_id == self.image_id \
+          && server_details.flavor_id == self.flavor_id \
+          && server_details.kernel_id == self.kernel_id \
+          && server_details.data_center_id == self.data_center_id
     end
 
     def connection
@@ -153,18 +153,18 @@ module Sources
       end
     end
 
+    ServerDetails = Struct.new(:data_center_id, :flavor_id, :kernel_id, :image_id)
     def parse_proxy_name(name)
       name_pattern = /^(\d+)-(\d+)-(\d+)-(\d+)-/
       parsed_data = name_pattern.match(name)
       if parsed_data
-        server_details = {
-          :data_center_id => parsed_data.captures[0].to_i,
-          :flavor_id => parsed_data.captures[1].to_i,
-          :kernel_id => parsed_data.captures[2].to_i,
-          :image_id => parsed_data.captures[3].to_i
-        }
+        return ServerDetails.new(parsed_data.captures[0].to_i,
+                                 parsed_data.captures[1].to_i,
+                                 parsed_data.captures[2].to_i,
+                                 parsed_data.captures[3].to_i)
+      else
+        return ServerDetails.new(nil, nil, nil, nil)
       end
-      server_details
     end
 
     def create_server
