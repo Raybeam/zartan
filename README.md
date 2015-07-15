@@ -164,8 +164,6 @@ Source objects with the same API/login credentials, but different regions.
   - This could be `New York 3`, `San Francisco 1`, etc.
 
 #### Joyent
-- Waiting on credentials to confirm configuration requirements. Below are
-  suspected configureation properties used by Joyent
 - proxy_port
   - What port is exposed for proxy services on the droplet image.
 - username
