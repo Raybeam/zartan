@@ -44,7 +44,7 @@ gem 'resque-scheduler'
 gem 'twitter-bootstrap-rails'
 
 # Fog supports many different cloud computing services
-gem 'fog'
+gem 'fog', '>= 1.29.0'
 
 gem 'andand'
 
@@ -68,7 +68,7 @@ group :development, :test do
   gem 'rspec-rails'
   gem 'factory_girl'
   gem 'database_cleaner'
-  
+
   # deploying
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
@@ -77,4 +77,3 @@ group :development, :test do
   gem 'awesome_print', require: "ap"
 
 end
-
