@@ -171,7 +171,7 @@ module Sources
       # Error message says they accept names up to 50 chars...but they don't
       # Changed uniqueness to be PID/timestamp since Linode eventually
       # truncates the name futher in their system and UUID kept getting truncated.
-      name = "#{data_center_id}-#{flavor_id}-#{kernel_id}-#{image_id}-#{Process.pid}-#{Time.new.to_i}"[0,45]
+      name = "#{data_center_id}-#{flavor_id}-#{kernel_id}-#{image_id}-#{Time.new.to_i}"[0,45]
       flavor = connection.flavors.get(config['flavor_id'])
 
       # Create Linode server
