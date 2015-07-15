@@ -26,7 +26,7 @@ FactoryGirl.define do
 
     after(:build) do |source|
       source.config = {
-        'name' => "proxy-unique-identifier-here",
+        'name' => "7-5-6-4-12345-1234567890",
         'api_key' => "BOMB_DIGGITY_KEY",
         'root_password' => "BOMB_DIGGITY_PW",
         'image_name' => "image",

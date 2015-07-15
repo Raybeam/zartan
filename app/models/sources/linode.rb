@@ -32,10 +32,14 @@ module Sources
     # server_is_proxy_type?(server)
     # given a server, determine if it is running a proxy
     def server_is_proxy_type?(server)
-      # Fog implenentation does not give access to flavor/image/etc data
-      # So doing the most basic of checks here
-      return server.name =~ /proxy/
-   end
+      # Linode/Fog does not give access to flavor/image/etc data for a server
+      # Parsing it from the proxy name instead
+      server_details = parse_proxy_name(server.name)
+      return server_details[:image_id] == self.image_id \
+          && server_details[:flavor_id] == self.flavor_id \
+          && server_details[:kernel_id] == self.kernel_id \
+          && server_details[:data_center_id] == self.data_center_id if !server_details.nil?
+    end
 
     def connection
       @connection ||= ::Fog::Compute.new(
@@ -142,9 +146,25 @@ module Sources
       end
     end
 
+    def parse_proxy_name(name)
+      name_pattern = /^(\d+)-(\d+)-(\d+)-(\d+)-/
+      parsed_data = name_pattern.match(name)
+      if (!parsed_data.nil?)
+        server_details = {
+          :data_center_id => parsed_data.captures[0].to_i,
+          :flavor_id => parsed_data.captures[1].to_i,
+          :kernel_id => parsed_data.captures[2].to_i,
+          :image_id => parsed_data.captures[3].to_i
+        }
+      end
+      server_details
+    end
+
     def create_server
-      # Linode restricts name to be no more than 50 chars
-      name = "proxy-#{SecureRandom.uuid}"
+      # Error message says they accept names up to 50 chars...but they don't
+      # Changed uniqueness to be PID/timestamp since Linode eventually
+      # truncates the name futher in their system and UUID kept getting truncated.
+      name = "#{data_center_id}-#{flavor_id}-#{kernel_id}-#{image_id}-#{Process.pid}-#{Time.new.to_i}"[0,45]
       flavor = connection.flavors.get(config['flavor_id'])
 
       # Create Linode server
