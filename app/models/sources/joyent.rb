@@ -17,7 +17,7 @@ module Sources
     # UUID will cause an error when creating the server.
     def validate_config!
       if !config[:image_id].nil?
-        for connection.flavors.each do |f|
+        connection.flavors.each do |f|
           if f.name == config[:package_id]
             return true
           end
