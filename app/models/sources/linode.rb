@@ -57,49 +57,30 @@ module Sources
       server || NoServer
     end
 
-    # The ID_TYPES methods all are very similar, so dynamically create all
+    # retrieve_image_id()
+    # If the id is not found then adds to the source's persistent error log
+    # Parameters:
+    #   None
+    # Returns:
+    #   - a numeric id representing the image on Linode
+    #   - nil if not found
+    def retrieve_image_id
+      name = config['image_name']
+
+      img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
+      if img_data.nil?
+        add_error "There is no image named #{name}."
+      else
+        id = img_data["IMAGEID"]
+      end
+      id
+    end
+
+    # Other than image, these ID_TYPES methods all are very similar, so dynamically create all
     # of them at once
     ID_TYPES.each do |id_type|
+      next if id_type == 'image'
       class_eval <<-RUBY
-        # image_id()
-        # flavor_id()
-        # kernel_id()
-        # data_center_id()
-        # Get the image/flavor/kernel/data center id.
-        # If the id is undefined, translate image/flavor/data center name to id by
-        # connecting to Linode.
-        # Returns cached value if already calculated
-        # Parameters:
-        #   None
-        # Returns:
-        #   - a numeric id representing the image/flavor/kernel/data center on Linode
-        #   - nil if not found
-        def #{id_type}_id
-          key = '#{id_type}_id'
-          return config[key] if config.has_key?(key)
-          names_to_ids
-          config[key]
-        end
-
-        # retrieve_image_id()
-        # If the id is not found then adds to the source's persistent error log
-        # Parameters:
-        #   None
-        # Returns:
-        #   - a numeric id representing the image on Linode
-        #   - nil if not found
-        def retrieve_image_id
-          name = config['image_name']
-
-          img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
-          if img_data.nil?
-            add_error "There is no image named \#{name}."
-          else
-            id = img_data["IMAGEID"]
-          end
-          id
-        end
-
         # retrieve_flavor_id()
         # retrieve_kernel_id()
         # retrieve_data_center_id()
@@ -127,6 +108,32 @@ module Sources
       RUBY
     end
 
+    # The ID_TYPES methods all are very similar, so dynamically create all
+    # of them at once
+    ID_TYPES.each do |id_type|
+      class_eval <<-RUBY
+        # image_id()
+        # flavor_id()
+        # kernel_id()
+        # data_center_id()
+        # Get the image/flavor/kernel/data center id.
+        # If the id is undefined, translate image/flavor/data center name to id by
+        # connecting to Linode.
+        # Returns cached value if already calculated
+        # Parameters:
+        #   None
+        # Returns:
+        #   - a numeric id representing the image/flavor/kernel/data center on Linode
+        #   - nil if not found
+        def #{id_type}_id
+          key = '#{id_type}_id'
+          return config[key] if config.has_key?(key)
+          names_to_ids
+          config[key]
+        end
+      RUBY
+    end
+
     # names_to_ids()
     # Retrieve all ids from the server and save them in the database
     # Does not save to the database if at least one id is nil.
@@ -149,7 +156,7 @@ module Sources
     def parse_proxy_name(name)
       name_pattern = /^(\d+)-(\d+)-(\d+)-(\d+)-/
       parsed_data = name_pattern.match(name)
-      if (!parsed_data.nil?)
+      if parsed_data
         server_details = {
           :data_center_id => parsed_data.captures[0].to_i,
           :flavor_id => parsed_data.captures[1].to_i,
