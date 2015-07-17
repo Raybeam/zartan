@@ -8,15 +8,13 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#validate_config!' do
     it 'identifies a valid config' do
-      expect(source.config).to have_key('image_id')
-      expect(source.config).to have_key('package_id')
-      expect(source.config['image_id']).to be
-      expect(source.config['package_id']).to be
-
+      expect("TBC").to be_nil
+      puts(source.methods)
       expect(source.validate_config!).to be_truthy
     end
 
     it 'identifies an invalid config when an id is nil' do
+      expect("TBC").to be_nil
       expect(source.config).to have_key('image_id')
       expect(source.config).to have_key('package_id')
       source.config['package_id'] = nil
@@ -29,15 +27,16 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#server_is_proxy_type?' do
     it 'identifies a server that runs a proxy' do
+      expect("TBC").to be_nil
       server = double(
         image_id: source.config['image_id'],
         package_id: source.config['package_id'],
       )
-      puts(source.methods)
       expect(source.send(:server_is_proxy_type?, server)).to be_truthy
     end
 
     it 'identifies a server that has a different package' do
+      expect("TBC").to be_nil
       server = double(
         image_id: source.config['image_id'],
         package_id: nil
@@ -46,6 +45,7 @@ RSpec.describe Sources::Joyent, type: :model do
     end
 
     it 'identifies a server that has a different image' do
+      expect("TBC").to be_nil
       server = double(
         image_id: nil,
         package_id: source.config['package_id']
@@ -56,6 +56,7 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#server_by_proxy' do
     it 'retrieves a server that matches the proxy' do
+      expect("TBC").to be_nil
       expect(source).to receive(:validate_config!).and_return(true)
       server1 = double('server1', :public_ip_address => '172.0.0.1')
       server2 = double('server2', :public_ip_address => proxy.host)
@@ -83,10 +84,11 @@ RSpec.describe Sources::Joyent, type: :model do
 
   context '#create_server' do
     it 'creates a server' do
+      expect("TBC").to be_nil
       server = double('server')
       connection = double(:servers => double(:create => server))
-      expect(source).to receive(:connection).and_return(connection)
-      expect(source).to receive(:image_id).and_return(1)
+      expect(source.config).to receive(:connection).and_return(connection)
+      expect(source.config).to receive(:image_id).and_return(1)
       expect(source).to receive(:package_id).and_return(2)
 
       expect(source.send(:create_server)).to be server
