@@ -41,4 +41,9 @@ Rails.application.configure do
 
   # Sqlite does not support serialized transactions
   config.default_transaction_options = {}
+
+  # Bypassing an SSL verification issues. Will print warnings when you start the
+  # server, console, or anything that loads this development environment.
+  require 'openssl'
+  OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 end
