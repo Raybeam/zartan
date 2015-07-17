@@ -179,7 +179,7 @@ Source objects with the same API/login credentials, but different regions.
   - note: custom images are only available in its original datacenter
 - package_id
   - The name of the package/flavor of the server you would like to work on.
-    ex: g3-devtier-0.25-kvm
+  - ex: g3-devtier-0.25-kvm
 
 
 If any of the information entered above information is inaccurate
