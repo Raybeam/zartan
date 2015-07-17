@@ -6,6 +6,7 @@ module Zartan
       [
         ::Sources::DigitalOcean,
         ::Sources::Linode
+        ::Sources::Joyent
       ]
     end
   end

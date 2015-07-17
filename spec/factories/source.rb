@@ -41,4 +41,21 @@ FactoryGirl.define do
       }
     end
   end
+
+  factory :joyent_source, class: Sources::Joyent do
+    name "Example Joyent Source"
+    type "Sources::Joyent"
+    max_proxies 5
+
+    after(:build) do |source|
+      source.config = {
+        'username' => "joyent_username",
+        'password' => "SECRET_TUNNEL",
+        'datacenter' => "joyentcloud_test_location",
+        'image_id' => "proxy_image",
+        'package_id' => "flavor_name",
+        'proxy_port' => 1337
+      }
+    end
+  end
 end

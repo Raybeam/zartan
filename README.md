@@ -166,18 +166,22 @@ Source objects with the same API/login credentials, but different regions.
   - This could be `New York 3`, `San Francisco 1`, etc.
 
 #### Joyent
-- Waiting on credentials to confirm configuration requirements. Below are
-  suspected configureation properties used by Joyent
 - proxy_port
-  - What port is exposed for proxy services on the droplet image.
+  - What port is exposed for proxy services on the compute image.
 - username
-  - TBA
+  - The username used to log into the Joyent Account
 - password
-  - TBA
-- image_name
-  - Operating system used for the server
-- flavor_name
-  - Package type
+  - The password associated with the Joyent username
+  datacenter
+  - The datacenter url you would want to access
+  - ex: https://us-west-1.api.joyentcloud.com
+- image_id
+  - The UUID of the image you would like to start
+  - ex: e0f6ce96-a5a7-c63e-b5c1-c48c3a7eb5e6
+  - note: custom images are only available in its original datacenter
+- package_id
+  - The name of the package/flavor of the server you would like to work on.
+  - ex: g3-devtier-0.25-kvm
 
 
 If any of the information entered above information is inaccurate
@@ -456,12 +460,12 @@ specific commands/config files can be adjusted for other production setups.
   The following steps are used to create a new image that contains what is
   required for the proxies.
 
-  1) Start with an up-to-date Ubuntu image
-  2) Run commad `sudo apt-get install tinyproxy` (install tinyproxy)
-  3) Replace /etc/tinyproxy.conf with a config file that contains a specific IP you want to reach the image from. You may need to modify the User and Group lines near the top of the file, replacing "deploy" with the name of the (non-root) user of the machine you're setting up
-  4) Run command `sudo service tinyproxy restart` (restart tinyproxy)
-  5) From wherever the IP address you entered into the config file in step 3, start up a web browser and configure it to use an HTTP proxy with host {the IP address of the machine you're provisioning} and port 8888. Verify that you can access a few sites via the proxy.
-  6) If everything works, create a snapshot of the instance you just built.
+  1. Start with an up-to-date Ubuntu image
+  2. Run commad `sudo apt-get install tinyproxy` (install tinyproxy)
+  3. Replace /etc/tinyproxy.conf with a config file that contains a specific IP you want to reach the image from. You may need to modify the User and Group lines near the top of the file, replacing "deploy" with the name of the (non-root) user of the machine you're setting up
+  4. Run command `sudo service tinyproxy restart` (restart tinyproxy)
+  5. From wherever the IP address you entered into the config file in step 3, start up a web browser and configure it to use an HTTP proxy with host {the IP address of the machine you're provisioning} and port 8888. Verify that you can access a few sites via the proxy.
+  6. If everything works, create a snapshot of the instance you just built.
 
 14. Where to go from here
 
