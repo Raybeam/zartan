@@ -5,7 +5,7 @@ module Zartan
     def all
       [
         ::Sources::DigitalOcean,
-        ::Sources::Linode
+        ::Sources::Linode,
         ::Sources::Joyent
       ]
     end
