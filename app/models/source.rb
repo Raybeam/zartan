@@ -20,7 +20,7 @@ class Source < ActiveRecord::Base
   def config
     @config ||= JSON.parse(read_attribute(:config))
   end
-  
+
   def config=(new_value)
     @config = new_value
   end
@@ -28,7 +28,7 @@ class Source < ActiveRecord::Base
   def save_config
     write_attribute(:config, @config.to_json) if @config
   end
-  
+
   SourceConflict = Struct.new(:conflict_exists?)
 
   # Pure virtual function intended for child classes to free the proxy resources
@@ -75,6 +75,11 @@ class Source < ActiveRecord::Base
   # Entry point for child classes to note that a proxy's server is about
   # to be decommissioned.
   def pending_decommission(proxy)
+  end
+
+  # Pure virtual function intended for child classes to free all proxy resources
+  def purge_servers
+    raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
   end
 
   protected
@@ -134,7 +139,7 @@ class Source < ActiveRecord::Base
     def required_fields
       raise NotImplementedError, "Implement #{__callee__} in #{self.to_s}"
     end
-    
+
     def display_name
       # The default implementation of ##display_name takes the name of the class
       # minus any module names, and attempts to convert it into mutliple words

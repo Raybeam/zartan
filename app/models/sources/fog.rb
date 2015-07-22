@@ -111,7 +111,7 @@ module Sources
     # owned by this source
     def number_of_remote_servers
       connection.servers.inject(0) do |sum, s|
-        sum += 1 if server_is_proxy_type?(s) 
+        sum += 1 if server_is_proxy_type?(s)
         sum
       end
     end
@@ -154,6 +154,12 @@ module Sources
     # validate_config!()
     # Connect to the cloud service to make sure our config is valid
     def validate_config!
+      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
+    end
+
+    # purge_servers()
+    # Pure virtual function intended for child classes to free all proxy resources
+    def purge_servers
       raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
     end
 
