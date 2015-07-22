@@ -26,6 +26,17 @@ module Sources
       return false
     end
 
+    # Connnect to Joyent and find all of the proxies with the datacenter
+    # provided with this source. Each proxy found will then be delete.
+    # To selecte a different datacenter, a new source must be created or you
+    # can edit the source with a new datacenter.
+    def purge
+      connection.servers.select do |s|
+        puts('check if proxy')
+        puts('if proxy delete/decomision')
+      end
+    end
+
     private
 
     # server_is_proxy_type?(server)
@@ -62,8 +73,9 @@ module Sources
       )
     # Generally get this error when we've hit our limit on # of servers
     # but Joyent will produce errors here as well if form data is incorrect
-    rescue Excon::Errors::Forbidden => e
-      add_error(JSON.parse(e.response.body)['error_message'])
+    rescue => e
+      puts(e)
+      add_error(e.message)
       NoServer
     end
   end
