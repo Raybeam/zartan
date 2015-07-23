@@ -31,7 +31,7 @@ module Sources
     # Each machine found will be delete.
     def purge_servers(captcha=nil)
       if captcha.nil?
-        puts("What is 1 + 2 + 3 + 4?")
+        puts("What is 1 + 2 + 3 + 4? Put answer as a parameter.")
       elsif captcha == 10
         connection.servers.select do |s|
           puts("deleteing #{s.name} (id: #{s.id})")
