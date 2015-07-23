@@ -28,20 +28,13 @@ module Sources
 
     # Connnect to Joyent and find all of the machines with that combination of
     # user and datacenter that is provided with each source object source.
-    # Each machine found will be delete.
-    def purge_servers(captcha=nil)
-      if captcha.nil?
-        puts("What is 1 + 2 + 3 + 4? Put answer as a parameter.")
-      elsif captcha == 10
-        connection.servers.select do |s|
-          puts("deleteing #{s.name} (id: #{s.id})")
-          connection.delete_machine(s.id)
-        end
-        return true
-      else
-        puts("WRONG!")
+    # Each machine found will be delete. Return
+    def purge_servers
+      connection.servers.select do |s|
+        puts("deleteing #{s.name} (id: #{s.id})")
+        connection.delete_machine(s.id)
       end
-      return false
+      #delete all of the proxy records
     end
 
     private
