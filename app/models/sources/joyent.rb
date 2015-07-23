@@ -62,8 +62,8 @@ module Sources
       )
     # Generally get this error when we've hit our limit on # of servers
     # but Joyent will produce errors here as well if form data is incorrect
-    rescue Excon::Errors::Forbidden => e
-      add_error(JSON.parse(e.response.body)['error_message'])
+    rescue => e
+      add_error(e.message)
       NoServer
     end
   end
