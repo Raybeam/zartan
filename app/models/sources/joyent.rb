@@ -35,6 +35,7 @@ module Sources
       connection.servers.select do |s|
         puts("deleteing #{s.name} (id: #{s.id})")
         puts(connection.delete_machine(s.id))
+      end
     end
 
     private
