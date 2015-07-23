@@ -63,7 +63,6 @@ module Sources
     # Generally get this error when we've hit our limit on # of servers
     # but Joyent will produce errors here as well if form data is incorrect
     rescue => e
-      puts(e)
       add_error(e.message)
       NoServer
     end
