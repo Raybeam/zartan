@@ -26,16 +26,15 @@ module Sources
       return false
     end
 
-    # Connnect to Joyent and find all of the proxies with the datacenter
-    # provided with this source. Each proxy found will then be delete.
-    # To selecte a different datacenter, a new source must be created or you
-    # can edit the source with a new datacenter.
-    # Pure virtual function intended for child classes to free all proxy resources
+    # Connnect to Joyent and find all of the machines with that combination of
+    # user and datacenter that is provided with each source object source.
+    # Each machine found will be delete.
     def purge_servers(captcha=false)
       connection.servers.select do |s|
         puts("deleteing #{s.name} (id: #{s.id})")
-        puts(connection.delete_machine(s.id))
+        connection.delete_machine(s.id)
       end
+      return true
     end
 
     private
