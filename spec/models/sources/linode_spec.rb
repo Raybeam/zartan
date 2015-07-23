@@ -111,9 +111,9 @@ RSpec.describe Sources::Linode, type: :model do
       image1 = {"LABEL" => "foo", "IMAGEID" => 1}
       image2 = {"LABEL" => "bar", "IMAGEID" => 2}
       connection = double(:image_list => double(:body => {"DATA" => [image1, image2]}))
-      expect(source).to receive(:connection).and_return(connection)
+      expect(source).to receive(:connection).twice.and_return(connection)
       expect(source).to receive(:add_error).with(
-        "There is no image named #{source.config['image_name']}."
+        "There is no image named #{source.config['image_name']}. Options are: foo, bar"
       )
 
       expect(source.send(:retrieve_image_id)).to be nil

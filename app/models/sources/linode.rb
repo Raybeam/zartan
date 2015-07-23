@@ -69,9 +69,32 @@ module Sources
 
       img_data = connection.image_list.body["DATA"].find { |i| i["LABEL"] == name }
       if img_data.nil?
-        add_error "There is no image named #{name}."
+        names = connection.image_list.body["DATA"].map { |i| i["LABEL"] }.join(", ")
+        add_error "There is no image named #{name}. " \
+          "Options are: #{names}"
       else
         id = img_data["IMAGEID"]
+      end
+      id
+    end
+
+    # retrieve_data_center_id()
+    # If the id is not found then adds to the source's persistent error log
+    # Parameters:
+    #   None
+    # Returns:
+    #   - a numeric id representing the data center on Linode
+    #   - nil if not found
+    def retrieve_data_center_id
+      name = config['data_center_name']
+
+      id = connection.data_centers.select do |i|
+        i.location == name
+      end.first.andand.id
+      if id.nil?
+        names = connection.data_centers.map(&:location).join(", ")
+        add_error "There is no data_center named #{name}. " \
+          "Options are: #{names}"
       end
       id
     end
@@ -79,12 +102,11 @@ module Sources
     # Other than image, these ID_TYPES methods all are very similar, so dynamically create all
     # of them at once
     ID_TYPES.each do |id_type|
-      next if id_type == 'image'
+      next if ['image', 'data_center'].include?(id_type)
       class_eval <<-RUBY
         # retrieve_flavor_id()
         # retrieve_kernel_id()
-        # retrieve_data_center_id()
-        # Retrieve flavor/kernel/data center id from Linode
+        # Retrieve flavor/kernel id from Linode
         # If the id is not found then adds to the source's persistent error log
         # Parameters:
         #   None
@@ -95,8 +117,7 @@ module Sources
           name = config['#{id_type}_name']
 
           id = connection.#{id_type.pluralize}.select do |i|
-            if '#{id_type}' == 'data_center' then i.location == name
-            else i.name == name end
+            i.name == name
           end.first.andand.id
           if id.nil?
             names = connection.#{id_type.pluralize}.map(&:name).join(", ")
