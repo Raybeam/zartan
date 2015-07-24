@@ -141,7 +141,7 @@ module Sources
 
       connection.servers.each do |server|
         if server_is_proxy_type?(server)
-          connection.delete_machine(server.id)
+          server.destroy
           puts("destroy: #{server}")
         end
       end
