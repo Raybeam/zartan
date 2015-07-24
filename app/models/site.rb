@@ -177,6 +177,12 @@ class Site < ActiveRecord::Base
     end
   end
 
+  def forget_proxy(proxy)
+    proxy_removal_wrapper(proxy) do
+      proxy_performance(proxy).destroy
+    end
+  end
+
   private
 
   def latest_proxy_info
@@ -196,12 +202,6 @@ class Site < ActiveRecord::Base
     end
     yield(proxy)
     proxy.queue_decommission
-  end
-
-  def forget_proxy(proxy)
-    proxy_removal_wrapper(proxy) do
-      proxy_performance(proxy).destroy
-    end
   end
 
   def disable_proxy(proxy)
