@@ -124,6 +124,29 @@ module Sources
       recent_decommissions << server.name
     end
 
+    #
+    def purge_servers
+      self.proxies.active.each do |proxy|
+        Site.all.each do |site|
+          site.forget_proxy(proxy)
+          puts("forget from: #{site}")
+          puts("forget proxy: #{proxy}")
+        end
+      end
+
+      self.proxies.each do |proxy|
+        proxy.destroy
+        puts("destroy: #{proxy}")
+      end
+
+      connection.servers.each do |server|
+        if server_is_proxy_type?(server)
+          connection.delete_machine(server.id)
+          puts("destroy: #{server}")
+        end
+      end
+    end
+
     protected
 
     # server_is_proxy_type?(server)
@@ -154,12 +177,6 @@ module Sources
     # validate_config!()
     # Connect to the cloud service to make sure our config is valid
     def validate_config!
-      raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
-    end
-
-    # purge_servers()
-    # Pure virtual function intended for child classes to free all proxy resources
-    def purge_servers
       raise NotImplementedError, "Implement #{__callee__} in #{self.class.to_s}"
     end
 
