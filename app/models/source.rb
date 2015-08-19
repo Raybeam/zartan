@@ -81,11 +81,13 @@ class Source < ActiveRecord::Base
 
   # Helper method for child classes to use to add a new proxy to the database
   # when the host and port have been created
-  def add_proxy(host, port, site = Site::NoSite)
+  def add_proxy(host, port, username = nil, password = nil, site = Site::NoSite)
     proxy = Proxy.restore_or_initialize host: host, port: port
 
     return if fix_source_conflicts(proxy).conflict_exists?
     proxy.source = self
+    proxy.username = username
+    proxy.password = password
     proxy.save
     site.add_proxies(proxy)
   end
