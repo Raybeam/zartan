@@ -101,7 +101,7 @@ RSpec.describe Source, type: :model do
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
       expect(site).to receive(:add_proxies)
 
-      source.send(:add_proxy, proxy.host, proxy.port, site)
+      source.send(:add_proxy, proxy.host, proxy.port, nil, nil, site)
       expect(proxy.source).to be source
     end
 
@@ -109,7 +109,7 @@ RSpec.describe Source, type: :model do
       conflict = double(:conflict_exists? => true)
       expect(source).to receive(:fix_source_conflicts).and_return(conflict)
 
-      source.send(:add_proxy, proxy.host, proxy.port, site)
+      source.send(:add_proxy, proxy.host, proxy.port, nil, nil, site)
       expect(proxy.source).to_not be source
     end
   end

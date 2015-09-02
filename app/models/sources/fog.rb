@@ -181,7 +181,7 @@ module Sources
     # Parameters:
     #   site - What site to add the found servers to (if any)
     def save_server(server, *args)
-      add_proxy(server.public_ip_address, config['proxy_port'], *args)
+      add_proxy(server.public_ip_address, config['proxy_port'], nil, nil, *args)
     end
   end
 end
