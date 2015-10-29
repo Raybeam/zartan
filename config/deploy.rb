@@ -50,6 +50,8 @@ namespace :deploy do
     on roles(:web) do
       enabled_file = File.join(fetch(:deploy_to), 'shared', 'enabled')
       if test("ps cax | grep monit") and test("[ -f #{enabled_file} ]")
+        # Only restart the application if monit is installed and running, and
+        # the application has been enabled.
         execute :sudo, *%w(monit -g zartan_app restart all)
       else
         info "monit is not running, so we can't safely restart Zartan"

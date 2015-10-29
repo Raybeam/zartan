@@ -388,13 +388,17 @@ specific commands/config files can be adjusted for other production setups.
 10. Initial Deploy. In the dev environment:
 
   ```
+  ssh $deploy_target 'touch /var/www/zartan/shared/enabled'
   # may require "bundle exec" depending on your setup
   cap production deploy --trace
   ```
   This step succeeds if the final step complains about monit not being installed.
-  We couldn't install monit before now because it depends on files created by
+  We shouldn't install monit before now because it depends on files created by
   the initial deploy.  For now, launch the various services manually and install
   monit once everything is working.
+  If monit was already installed and configured (perhaps due to other
+  applications being run on the same host), then run the first line above
+  (touching the `enabled` file) _after_ the deploy instead of before it.
 
 11. First Launch.
 
