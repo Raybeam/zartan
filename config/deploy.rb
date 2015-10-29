@@ -33,7 +33,7 @@ namespace :deploy do
       end
     end
   end
-  
+
   desc "Set default values for global parameters in redis"
   after :build_pool, :seed_config do
     on roles(:web) do
@@ -44,11 +44,14 @@ namespace :deploy do
       end
     end
   end
-  
+
   desc "Restart zartan-related monitored processes"
   after :seed_config, :restart do
     on roles(:web) do
-      if test("ps cax | grep monit")
+      enabled_file = File.join(fetch(:deploy_to), 'shared', 'enabled')
+      if test("ps cax | grep monit") and test("[ -f #{enabled_file} ]")
+        # Only restart the application if monit is installed and running, and
+        # the application has been enabled.
         execute :sudo, *%w(monit -g zartan_app restart all)
       else
         info "monit is not running, so we can't safely restart Zartan"
