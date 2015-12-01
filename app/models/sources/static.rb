@@ -21,32 +21,6 @@ module Sources
       super
     end
 
-    def load_from_file(path, site = Site::NoSite)
-      open(path, 'r').each_line do |proxy_spec|
-        proxy_spec.strip!
-        next if proxy_spec.empty? or proxy_spec =~ /^#/
-
-        host, port, username, password = nil, nil, nil, nil
-        case proxy_spec
-        when /^(.+):(.+)@([0-9.]+):([0-9]+)$/
-          host = $3
-          port = $4.to_i
-          username = $1
-          password = $2
-        when /^([0-9.]+):([0-9]+)$/
-          host = $1
-          port = $2.to_i
-        else
-          add_error "Invalid proxy specification: #{proxy_spec}"
-          next
-        end
-
-        unless self.proxies.active.where(host: host, port: port).count > 0
-          add_proxy(host, port, username, password, site)
-        end
-      end
-    end
-
     class << self
       def required_fields; {}; end
       def display_name; "Static List"; end
