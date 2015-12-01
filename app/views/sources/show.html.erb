@@ -2,6 +2,9 @@
   <span class="pull-right">
     <%= link_to "Back", sources_path, :class => 'btn btn-default'  %>
     <%= link_to "Edit", edit_source_path(@source), :class => 'btn btn-default' %>
+    <% if @source.is_a? Sources::Static %>
+      <%= link_to "Manage Unhealthy Proxies", source_proxy_list_path(@source), :class => 'btn btn-default' %>
+    <% end %>
   </span>
   <h1>Source <%= @source.name %></h1>
 </div>
