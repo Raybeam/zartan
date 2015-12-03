@@ -1,0 +1,30 @@
+<div class="page-header">
+  <span class="pull-right">
+    <%= link_to "Back", source_path(@source), :class => 'btn btn-default'  %>
+  </span>
+  <h1>Unhealthy Proxy List for <%= @source.name %></h1>
+</div>
+
+<h2>
+  <span class="pull-right">
+    <%= link_to("Return All to Pool", refresh_source_proxy_list_path(@source), method: :post, class: 'btn btn-default') %>
+    <%= link_to("Delete All", cleanup_source_proxy_list_path(@source), method: :post, class: 'btn btn-danger') %>
+  </span>
+  Unhealthy Proxies
+</h2>
+<% if @unhealthy_proxies.empty? %>
+  <p class="lead text-center">No unhealthy proxies</p>
+<% else %>
+  <pre><%= @unhealthy_proxies.map { |proxy|
+    "#{proxy.username}:#{proxy.password}@#{proxy.host}:#{proxy.port}"
+  }.join("\n") %></pre>
+<% end %>
+
+<h2>Add New Proxies</h2>
+<p>Enter proxies below, one per line, in the form of <code>username:password@ip:port</code>.</p>
+<%= form_tag(append_source_proxy_list_path(@source), method: 'POST') do %>
+  <div class="form-group">
+    <textarea class="form-control" rows="8" name="new_proxy_list"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Add proxies</button>
+<% end %>
